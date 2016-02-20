@@ -67,7 +67,7 @@
   (iedit-mode arg)
   (evil-multiedit-state))
 
-;;;###autoload
+;;;###autoload (autoload 'evil-multiedit-match-and-next "evil-multiedit" nil t)
 (evil-define-command evil-multiedit-match-and-next (&optional count)
   "Emulates Sublime Text's (and Atom's) multiple cursors functionality by marking the
 current word/selection and marking the next one on consecutive executions of this
@@ -104,7 +104,7 @@ function."
           (setq evil-ex-search-pattern (evil-ex-make-search-pattern (regexp-quote occurrence)))
           (evil-ex-find-next nil nil t))))))
 
-;;;###autoload
+;;;###autoload (autoload 'evil-multiedit-match-and-prev "evil-multiedit" nil t)
 (evil-define-command evil-multiedit-match-and-prev (&optional count)
   (interactive "<c>")
   (evil-multiedit-match-and-next (or (and count (* -1 count)) -1)))
@@ -272,7 +272,6 @@ If INTERACTIVE is non-nil then COMMAND is called interactively."
   (define-key evil-multiedit-state-map "O"         'evil-multiedit--open-above)
   ;; (define-key evil-multiedit-state-map "p"         'evil-multiedit--paste)
   (define-key evil-multiedit-state-map (kbd "C-g") 'evil-multiedit-abort)
-  (define-key evil-multiedit-state-map (kbd "RET") 'evil-multiedit-toggle-or-restrict-region)
   (define-key evil-multiedit-state-map [escape]    'evil-multiedit-abort)
   (define-key evil-multiedit-state-map "V"         'evil-multiedit--visual-line)
 
