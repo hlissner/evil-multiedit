@@ -49,8 +49,10 @@ yourself. Here is my recommended configuration:
 (define-key evil-normal-state-map (kbd "M-D") 'evil-multiedit-match-and-prev)
 (define-key evil-visual-state-map (kbd "M-D") 'evil-multiedit-match-and-prev)
 
-;; When RET is pressed while in visual mode, all edit fields outside the selected region
-;; will be disabled.
+;; RET will toggle the region under the cursor
+(define-key evil-multiedit-state-map (kbd "RET") 'evil-multiedit-toggle-or-restrict-region)
+
+;; ...and in visual mode, RET will disable all fields outside the selected region
 (define-key evil-visual-state-map (kbd "RET") 'evil-multiedit-toggle-or-restrict-region)
 
 ;; For moving between edit regions
