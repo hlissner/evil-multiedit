@@ -78,6 +78,9 @@ region:
 To disable these, set `evil-multiedit-dwim-motion-keys` to `nil` before loading
 evil-multiedit.
 
+NOTE: No need to bind a key for `evil-multiedit-abort`, pressing <kbd>ESC</kbd> in normal
+mode will invoke it.
+
 ## Functions
 
 * `evil-multiedit-match-all`
