@@ -90,3 +90,8 @@ So I made this little hack that uses `iedit-mode` to mimic
 [vim-multiedit](https://github.com/hlissner/vim-multiedit). It brings to Emacs a
 multiple-cursors implementation that emulates much of what Sublime Text (or Atom) offers;
 one that plays nice with evil-mode.
+
+## Known issues
+
+* `evil-multiedit` forcibly disables all the default `iedit` keybindings in
+  `iedit-occurrence-keymap-default`. This only matters if you use iedit directly, however.

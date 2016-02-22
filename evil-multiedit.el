@@ -6,7 +6,7 @@
 ;; Maintainer: Henrik Lissner <henrik@lissner.net>
 ;; Created: February 20, 2016
 ;; Modified: February 22, 2016
-;; Version: 1.0.1
+;; Version: 1.1.0
 ;; Keywords: multiple cursors, editing, iedit
 ;; Homepage: https://github.com/hlissner/evil-multiedit
 ;; Package-Requires: ((evil "1.2.10") (iedit "0.97"))
@@ -15,7 +15,50 @@
 
 ;;; Commentary:
 ;;
+;; This plugin tries to fill that multi-cursor shaped gap in your heart by bringing
+;; Sublime Text (or Atom's) multiple cursor functionality to Emacs and evil-mode.
 ;;
+;; Note: Credit goes to [syl20bnr]() for his [evil-iedit-state]() plugin, which this
+;; plugin was heavily inspired by.
+;;
+;; Installation:
+;;
+;;   `evil-multiedit` will be available on MELPA soon.
+;;
+;;   For now, download `evil-multiedit.el` somewhere in your `load-path`.
+;;
+;;     (require 'evil-multiedit)
+;;
+;; Usage
+;;
+;;   evil-multiedit *does not bind any new keys*, so as not to impose, so you will have to
+;;   yourself. Here is my recommended configuration:
+;;
+;;     ;; Highlights all matches of the selection in the buffer.
+;;     (define-key evil-visual-state-map "R" 'evil-multiedit-match-all)
+;;
+;;     ;; Match the word under cursor (i.e. make it an edit region). Consecutive
+;;     ;; presses will incrementally add the next unmatched match.
+;;     (define-key evil-normal-state-map (kbd "M-d") 'evil-multiedit-match-and-next)
+;;     ;; Match selected region.
+;;     (define-key evil-visual-state-map (kbd "M-d") 'evil-multiedit-match-and-next)
+;;
+;;     ;; Same as M-d but in reverse.
+;;     (define-key evil-normal-state-map (kbd "M-D") 'evil-multiedit-match-and-prev)
+;;     (define-key evil-visual-state-map (kbd "M-D") 'evil-multiedit-match-and-prev)
+;;
+;;     ;; RET will toggle the region under the cursor
+;;     (define-key evil-multiedit-state-map (kbd "RET") 'evil-multiedit-toggle-or-restrict-region)
+;;
+;;     ;; ...and in visual mode, RET will disable all fields outside the selected
+;;     ;; region
+;;     (define-key evil-visual-state-map (kbd "RET") 'evil-multiedit-toggle-or-restrict-region)
+;;
+;;     ;; For moving between edit regions
+;;     (define-key evil-multiedit-state-map (kbd "C-n") 'evil-multiedit-next)
+;;     (define-key evil-multiedit-state-map (kbd "C-p") 'evil-multiedit-prev)
+;;     (define-key evil-multiedit-insert-state-map (kbd "C-n") 'evil-multiedit-next)
+;;     (define-key evil-multiedit-insert-state-map (kbd "C-p") 'evil-multiedit-prev)
 ;;
 ;;; Code:
 
@@ -31,7 +74,7 @@
 
 (defcustom evil-multiedit-dwim-motion-keys t
   "Whether or not to modify evil's motion keys to act differently when the cursor is
-  inside multiedit regions."
+  inside multiedit regions. Must be set before evil-multiedit is loaded."
   :group 'evil-multiedit
   :type 'boolean)
 
@@ -39,29 +82,11 @@
 (defvar evil-multiedit--pt-first nil "The beginning of the current region")
 (defvar evil-multiedit--pt-index (cons 1 1) "The forward/backward search indices")
 
-(evil-define-state multiedit
-  "`multiedit state' interfacing iedit mode."
-  :tag " <ME> "
-  :enable (normal)
-  :cursor box
-  :message "-- MULTIEDIT --"
-  ;; force iedit mode
-  (if (evil-replace-state-p) (call-interactively 'iedit-mode))
-  (if (eq evil-state 'multiedit)
-      (advice-add 'iedit-done :override 'evil-multiedit*iedit-done)
-    (advice-remove 'iedit-done 'evil-multiedit*iedit-done)))
-
-(evil-define-state multiedit-insert
-  "Replace insert state in `iedit state'."
-  :tag " <MEi> "
-  :enable (insert)
-  :cursor (bar . 2)
-  :message "-- MULTIEDIT INSERT --")
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;###autoload
 (defun evil-multiedit-match-all (&optional arg)
+  "Highlight all matches of the current selection as multiedit regions."
   (interactive "P")
   (if (fboundp 'ahs-clear) (ahs-clear))
   (iedit-mode arg)
@@ -69,8 +94,8 @@
 
 ;;;###autoload (autoload 'evil-multiedit-match-and-next "evil-multiedit" nil t)
 (evil-define-command evil-multiedit-match-and-next (&optional count)
-  "Emulates Sublime Text's (and Atom's) multiple cursors functionality by marking the
-current word/selection and marking the next one on consecutive executions of this
+  "Emulates Sublime Text's (and Atom's) multiple cursors functionality by marking the word
+at point (or selection) and marking the next one on consecutive executions of this
 function."
   (interactive "<c>")
   (let ((backwards-p (and count (< count 0))))
@@ -106,11 +131,15 @@ function."
 
 ;;;###autoload (autoload 'evil-multiedit-match-and-prev "evil-multiedit" nil t)
 (evil-define-command evil-multiedit-match-and-prev (&optional count)
+  "The backwards version of `evil-multiedit-match-and-next'"
   (interactive "<c>")
   (evil-multiedit-match-and-next (or (and count (* -1 count)) -1)))
 
 ;;;###autoload
 (defun evil-multiedit-toggle-or-restrict-region (&optional beg end)
+  "If in visual mode, restrict the multiedit regions to the selected region (i.e. disable
+all regions outside the selection). If in any other mode, toggle the multiedit region
+beneath the cursor, if one exists."
   (interactive)
   (if (iedit-current-occurrence-string)
       (cond ((evil-visual-state-p)
@@ -126,44 +155,26 @@ function."
     (call-interactively 'evil-ret)))
 
 ;;;###autoload
-(defalias 'evil-multiedit-next 'iedit-next-occurrence)
+(defalias 'evil-multiedit-next 'iedit-next-occurrence
+  "Jump to the next multiedit region.")
 ;;;###autoload
-(defalias 'evil-multiedit-prev 'iedit-prev-occurrence)
+(defalias 'evil-multiedit-prev 'iedit-prev-occurrence
+  "Jump to the previous multiedit region.")
 
 ;;;###autoload
 (defun evil-multiedit-abort ()
+  "Clear all multiedit regions, clean up and revert to normal state."
   (interactive)
   (iedit-done)
   (evil-normal-state)
   (evil-multiedit--cleanup))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defun evil-multiedit--cleanup ()
   (setq evil-multiedit--pt nil
         evil-multiedit--pt-first nil
         evil-multiedit--pt-index (cons 1 1)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defun evil-multiedit*iedit-done ()
-  "Exit Iedit mode. Save the current occurrence string locally and globally. Save the
-initial string globally."
-  (when iedit-buffering
-    (iedit-stop-buffering))
-  (setq iedit-last-occurrence-local (iedit-current-occurrence-string)
-        iedit-last-occurrence-global iedit-last-occurrence-local
-        iedit-last-initial-string-global iedit-initial-string-local
-        iedit-num-lines-to-expand-up 0
-        iedit-num-lines-to-expand-down 0)
-  (iedit-cleanup)
-  (setq iedit-initial-string-local nil
-        iedit-mode nil)
-  (force-mode-line-update)
-  (remove-hook 'kbd-macro-termination-hook 'iedit-done t)
-  (remove-hook 'change-major-mode-hook 'iedit-done t)
-  (remove-hook 'iedit-aborting-hook 'iedit-done t)
-  (run-hooks 'iedit-mode-end-hook))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defmacro evil-multiedit--switch-to-insert-state-after (command &optional interactive)
   "Call COMMAND and switch to iedit-insert state.
@@ -253,32 +264,73 @@ If INTERACTIVE is non-nil then COMMAND is called interactively."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(advice-add 'evil-force-normal-state :after 'evil-multiedit-abort)
+(defun evil-multiedit*iedit-done ()
+  "Advice function that exits Iedit mode and retains occurrence state properly."
+  (when iedit-buffering
+    (iedit-stop-buffering))
+  (setq iedit-last-occurrence-local (iedit-current-occurrence-string)
+        iedit-last-occurrence-global iedit-last-occurrence-local
+        iedit-last-initial-string-global iedit-initial-string-local
+        iedit-num-lines-to-expand-up 0
+        iedit-num-lines-to-expand-down 0)
+  (iedit-cleanup)
+  (setq iedit-initial-string-local nil
+        iedit-mode nil)
+  (force-mode-line-update)
+  (remove-hook 'kbd-macro-termination-hook 'iedit-done t)
+  (remove-hook 'change-major-mode-hook 'iedit-done t)
+  (remove-hook 'iedit-aborting-hook 'iedit-done t)
+  (run-hooks 'iedit-mode-end-hook))
 
-(when evil-multiedit-dwim-motion-keys
-  (define-key evil-multiedit-state-map "$"                   'evil-multiedit--end-of-line)
-  (evil-redirect-digit-argument evil-multiedit-state-map "0" 'evil-multiedit--beginning-of-line)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-  (define-key evil-multiedit-state-map "a"         'evil-multiedit--append)
-  (define-key evil-multiedit-state-map "A"         'evil-multiedit--append-line)
-  (define-key evil-multiedit-state-map "c"         'evil-multiedit--change)
-  (define-key evil-multiedit-state-map "C"         'evil-multiedit--substitute)
-  (define-key evil-multiedit-state-map "D"         'iedit-delete-occurrences)
-  (define-key evil-multiedit-state-map "gg"        'iedit-goto-first-occurrence)
-  (define-key evil-multiedit-state-map "G"         'iedit-goto-last-occurrence)
-  (define-key evil-multiedit-state-map "i"         'evil-multiedit-insert-state)
-  (define-key evil-multiedit-state-map "I"         'evil-multiedit--insert-line)
-  (define-key evil-multiedit-state-map "o"         'evil-multiedit--open-below)
-  (define-key evil-multiedit-state-map "O"         'evil-multiedit--open-above)
-  ;; (define-key evil-multiedit-state-map "p"         'evil-multiedit--paste)
-  (define-key evil-multiedit-state-map (kbd "C-g") 'evil-multiedit-abort)
-  (define-key evil-multiedit-state-map [escape]    'evil-multiedit-abort)
-  (define-key evil-multiedit-state-map "V"         'evil-multiedit--visual-line)
+(evil-define-state multiedit
+  "`multiedit state' interfacing iedit mode."
+  :tag " <ME> "
+  :enable (normal)
+  :cursor box
+  :message "-- MULTIEDIT --"
+  (if (eq evil-state 'multiedit)
+      (progn
+        (advice-add 'iedit-done :override 'evil-multiedit*iedit-done)
+        (advice-add 'evil-force-normal-state :after 'evil-multiedit-abort)
+        (if (evil-replace-state-p) (call-interactively 'iedit-mode)))
+    (advice-remove 'iedit-done 'evil-multiedit*iedit-done)
+    (advice-remove 'evil-force-normal-state 'evil-multiedit-abort)))
 
-  (define-key evil-multiedit-state-map "za"        'iedit-toggle-unmatched-lines-visible)
+(evil-define-state multiedit-insert
+  "Replace insert state in `iedit state'."
+  :tag " <MEi> "
+  :enable (insert)
+  :cursor (bar . 2)
+  :message "-- MULTIEDIT INSERT --")
 
-  (define-key evil-multiedit-insert-state-map (kbd "C-g") 'evil-multiedit-abort)
-  (define-key evil-multiedit-insert-state-map [escape]    'evil-multiedit-state))
+(let ((me-map evil-multiedit-state-map)
+      (me-imap evil-multiedit-insert-state-map))
+  (when evil-multiedit-dwim-motion-keys
+    (define-key me-map "$"                   'evil-multiedit--end-of-line)
+    (evil-redirect-digit-argument me-map "0" 'evil-multiedit--beginning-of-line)
+
+    (define-key me-map "a"         'evil-multiedit--append)
+    (define-key me-map "A"         'evil-multiedit--append-line)
+    (define-key me-map "c"         'evil-multiedit--change)
+    (define-key me-map "C"         'evil-multiedit--substitute)
+    (define-key me-map "D"         'iedit-delete-occurrences)
+    (define-key me-map "gg"        'iedit-goto-first-occurrence)
+    (define-key me-map "G"         'iedit-goto-last-occurrence)
+    (define-key me-map "i"         'evil-multiedit-insert-state)
+    (define-key me-map "I"         'evil-multiedit--insert-line)
+    (define-key me-map "o"         'evil-multiedit--open-below)
+    (define-key me-map "O"         'evil-multiedit--open-above)
+    ;; (define-key me-map "p"         'evil-multiedit--paste)
+    (define-key me-map (kbd "C-g") 'evil-multiedit-abort)
+    (define-key me-map [escape]    'evil-multiedit-abort)
+    (define-key me-map "V"         'evil-multiedit--visual-line)
+
+    (define-key me-map "za"        'iedit-toggle-unmatched-lines-visible)
+
+    (define-key me-imap (kbd "C-g") 'evil-multiedit-abort)
+    (define-key me-imap [escape]    'evil-multiedit-state)))
 
 (provide 'evil-multiedit)
 ;;; evil-multiedit.el ends here
