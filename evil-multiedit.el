@@ -9,7 +9,7 @@
 ;; Version: 1.1.0
 ;; Keywords: multiple cursors, editing, iedit
 ;; Homepage: https://github.com/hlissner/evil-multiedit
-;; Package-Requires: ((evil "1.2.10") (iedit "0.97"))
+;; Package-Requires: ((evil "1.2.10") (iedit "0.97") (cl-lib "0.5"))
 ;;
 ;; This file is not part of GNU Emacs.
 
@@ -66,6 +66,7 @@
 
 (require 'evil)
 (require 'iedit)
+(require 'cl-lib)
 
 (defgroup evil-multiedit nil
   ""
@@ -106,12 +107,12 @@ function."
             (goto-char evil-multiedit--pt)
             (while (and (> i 0)
                         (evil-ex-find-next nil (if backwards-p 'backward 'forward) t))
-              (decf i))
+              (cl-decf i))
             (if (> i 0)
                 (message "No more matches!")
-              (incf (if backwards-p
-                        (cdr evil-multiedit--pt-index)
-                      (car evil-multiedit--pt-index))))
+              (cl-incf (if backwards-p
+                           (cdr evil-multiedit--pt-index)
+                         (car evil-multiedit--pt-index))))
             (unless (iedit-find-current-occurrence-overlay)
               (iedit-toggle-selection)))
         (let* ((bounds (if (evil-visual-state-p)
