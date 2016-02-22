@@ -15,11 +15,8 @@ For now, download `evil-multiedit.el` somewhere in your `load-path`.
 
 ## Usage
 
-> Screenshots coming soon
-
-<!-- ![evil-multiedit-match-all](/../screenshots/match-all.png?raw=true) -->
-<!-- ![evil-multiedit-match-and-next/prev](/../screenshots/matching.png?raw=true) -->
-<!-- ![evil-multiedit-restrict-to-region](/../screenshots/match-all.png?raw=true) -->
+![evil-multiedit-match-all](/../screenshots/01.gif?raw=true)
+![evil-multiedit-match-and-next](/../screenshots/02.gif?raw=true)
 
 evil-multiedit *does not bind any new keys*, so as not to impose, so you will have to
 yourself. Here is my recommended configuration:
