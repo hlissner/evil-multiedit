@@ -2,17 +2,8 @@
 
 This plugin tries to fill that multi-cursor shaped gap in your heart.
 
-> Why not multiple-cursors or evil-mc?
-
-It could be the [over] complexity of my emacs.d, but I've never managed to get
-[evil-mc](https://github.com/gabesoft/evil-mc) to work for me, and `multiple-cursors`
-[doesn't play nice with evil-mode](https://github.com/magnars/multiple-cursors.el/issues/17).
-
-So I settled for this hack that uses `iedit-mode` to mimics
-[vim-multiedit](https://github.com/hlissner/vim-multiedit) and bring a multiple-cursors
-implementation that emulates much of what Sublime Text (or Atom) offers to Emacs.
-
-And it plays nice with evil-mode.
+> Credit goes to [syl20bnr]() for his [evil-iedit-state]() plugin, which this plugin was
+> heavily inspired by.
 
 ## Installation
 
@@ -20,13 +11,11 @@ And it plays nice with evil-mode.
 
 For now, download `evil-multiedit.el` somewhere in your `load-path`.
 
-```elisp
-(require 'evil-multiedit)
-```
+`(require 'evil-multiedit)`
 
 ## Usage
 
-(Screenshots coming soon)
+> Screenshots coming soon
 
 <!-- ![evil-multiedit-match-all](/../screenshots/match-all.png?raw=true) -->
 <!-- ![evil-multiedit-match-and-next/prev](/../screenshots/matching.png?raw=true) -->
@@ -81,7 +70,7 @@ evil-multiedit.
 NOTE: No need to bind a key for `evil-multiedit-abort`, pressing <kbd>ESC</kbd> in normal
 mode will invoke it.
 
-## Functions
+### Functions
 
 * `evil-multiedit-match-all`
 * `evil-multiedit-match-and-next`
@@ -91,3 +80,13 @@ mode will invoke it.
 * `evil-multiedit-prev`
 * `evil-multiedit-abort`
 
+## Why not multiple-cursors or evil-mc?
+
+It could be the [over] complexity of my emacs.d, but I've never managed to get
+[evil-mc](https://github.com/gabesoft/evil-mc) to work for me, and `multiple-cursors`
+[doesn't play nice with evil-mode](https://github.com/magnars/multiple-cursors.el/issues/17).
+
+So I made this little hack that uses `iedit-mode` to mimic
+[vim-multiedit](https://github.com/hlissner/vim-multiedit). It brings to Emacs a
+multiple-cursors implementation that emulates much of what Sublime Text (or Atom) offers;
+one that plays nice with evil-mode.
