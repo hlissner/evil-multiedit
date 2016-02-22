@@ -5,11 +5,11 @@
 ;; Author: Henrik Lissner <http://github/hlissner>
 ;; Maintainer: Henrik Lissner <henrik@lissner.net>
 ;; Created: February 20, 2016
-;; Modified: February 20, 2016
-;; Version: 1.0.0
+;; Modified: February 22, 2016
+;; Version: 1.0.1
 ;; Keywords: multiple cursors, editing, iedit
 ;; Homepage: https://github.com/hlissner/evil-multiedit
-;; Package-Requires: ((evil "1.2.10") (iedit "0.97") (evil-multiedit-state "1.0"))
+;; Package-Requires: ((evil "1.2.10") (iedit "0.97"))
 ;;
 ;; This file is not part of GNU Emacs.
 
