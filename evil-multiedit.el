@@ -263,6 +263,12 @@ If INTERACTIVE is non-nil then COMMAND is called interactively."
     (iedit-delete-occurrences)
     (evil-multiedit-insert-state)))
 
+(defun evil-multiedit--paste-replace (count)
+  "Replace the selection with the yanked text."
+  (interactive "P")
+  (iedit-delete-occurrences)
+  (evil-paste-before count))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun evil-multiedit*iedit-done ()
@@ -323,7 +329,7 @@ If INTERACTIVE is non-nil then COMMAND is called interactively."
     (define-key me-map "I"         'evil-multiedit--insert-line)
     (define-key me-map "o"         'evil-multiedit--open-below)
     (define-key me-map "O"         'evil-multiedit--open-above)
-    ;; (define-key me-map "p"         'evil-multiedit--paste)
+    (define-key me-map "p"         'evil-multiedit--paste-replace)
     (define-key me-map (kbd "C-g") 'evil-multiedit-abort)
     (define-key me-map [escape]    'evil-multiedit-abort)
     (define-key me-map "V"         'evil-multiedit--visual-line)
