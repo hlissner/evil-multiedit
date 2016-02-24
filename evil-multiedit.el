@@ -85,6 +85,14 @@ will be ignored."
   :group 'evil-multiedit
   :type 'boolean)
 
+(defcustom evil-multiedit-thing-at-point-fn
+  (lambda () (bounds-of-thing-at-point 'word))
+  "This function dictates what to grab from under the cursor if evil-multiedit is invoked
+from normal mode. It takes no parameters and returns a cons cell (beg . end) containing
+the bounds of the region to mark."
+  :group 'evil-multiedit
+  :type 'function)
+
 (defvar evil-multiedit--pt nil "The point of the first match")
 (defvar evil-multiedit--pt-first nil "The beginning of the current region")
 (defvar evil-multiedit--pt-index (cons 1 1) "The forward/backward search indices")
@@ -127,7 +135,7 @@ function."
                          (car evil-multiedit--pt-index)))))
         (let* ((bounds (if (evil-visual-state-p)
                            (cons evil-visual-beginning evil-visual-end)
-                         (bounds-of-thing-at-point 'word)))
+                         (funcall evil-multiedit-thing-at-point-fn))
                (beg (car bounds))
                (end (cdr bounds))
                (occurrence (buffer-substring-no-properties (car bounds) (cdr bounds))))
