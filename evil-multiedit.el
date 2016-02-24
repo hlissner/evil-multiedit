@@ -79,6 +79,12 @@
   :group 'evil-multiedit
   :type 'boolean)
 
+(defcustom evil-multiedit-ignore-indent-and-trailing t
+  "When you match forward whitespace and this is non-nil, leading and trailing whitespace
+will be ignored."
+  :group 'evil-multiedit
+  :type 'boolean)
+
 (defvar evil-multiedit--pt nil "The point of the first match")
 (defvar evil-multiedit--pt-first nil "The beginning of the current region")
 (defvar evil-multiedit--pt-index (cons 1 1) "The forward/backward search indices")
@@ -103,18 +109,22 @@ function."
     (setq evil-ex-search-direction (if backwards-p 'backward 'forward))
     (save-excursion
       (if evil-multiedit--pt-first
-          (let ((i (if backwards-p (cdr evil-multiedit--pt-index) (car evil-multiedit--pt-index))))
+          (let ((i (if backwards-p (cdr evil-multiedit--pt-index) (car evil-multiedit--pt-index)))
+                (is-whitespace (string-match-p "^[ \t]+$" iedit-initial-string-local)))
             (goto-char evil-multiedit--pt)
             (while (and (> i 0)
-                        (evil-ex-find-next nil (if backwards-p 'backward 'forward) t))
-              (cl-decf i))
+                        (setq pt (evil-ex-find-next nil (if backwards-p 'backward 'forward) t)))
+              (unless (and is-whitespace
+                           evil-multiedit-ignore-indent-and-trailing
+                           (< (point) (save-excursion (back-to-indentation) (point))))
+                (cl-decf i)))
+            (unless (iedit-find-current-occurrence-overlay)
+              (iedit-toggle-selection))
             (if (> i 0)
                 (message "No more matches!")
               (cl-incf (if backwards-p
                            (cdr evil-multiedit--pt-index)
-                         (car evil-multiedit--pt-index))))
-            (unless (iedit-find-current-occurrence-overlay)
-              (iedit-toggle-selection)))
+                         (car evil-multiedit--pt-index)))))
         (let* ((bounds (if (evil-visual-state-p)
                            (cons evil-visual-beginning evil-visual-end)
                          (bounds-of-thing-at-point 'word)))
