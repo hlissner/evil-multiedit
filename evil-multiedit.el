@@ -146,7 +146,7 @@ function."
           (iedit-start (iedit-regexp-quote occurrence) beg end)
           (evil-multiedit-state)
           (setq evil-ex-search-pattern (evil-ex-make-search-pattern (regexp-quote occurrence)))
-          (evil-ex-find-next nil nil t))))))
+          (evil-ex-find-next nil nil t)))))))
 
 ;;;###autoload (autoload 'evil-multiedit-match-and-prev "evil-multiedit" nil t)
 (evil-define-command evil-multiedit-match-and-prev (&optional count)
