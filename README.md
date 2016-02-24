@@ -17,8 +17,7 @@ So I made this little hack that uses `iedit-mode` to mimic
 multiple selection implementation that emulates much of what Sublime Text (or Atom) offers;
 one that plays nice with evil-mode.
 
-![evil-multiedit-match-all](/../screenshots/01.gif?raw=true)
-![evil-multiedit-match-and-next](/../screenshots/02.gif?raw=true)
+![evil-multiedit](/../screenshots/main.gif?raw=true)
 
 ## Installation
 
