@@ -2,8 +2,20 @@
 
 This plugin tries to fill that multi-cursor shaped gap in your heart.
 
-> Credit goes to [syl20bnr]() for his [evil-iedit-state]() plugin, which this plugin was
-> heavily inspired by.
+Credit goes to [syl20bnr]() for his [evil-iedit-state]() plugin, which this plugin was
+heavily inspired by.
+
+> Why not multiple-cursors or evil-mc?
+
+It could be the [over] complexity of my [emacs.d](https://github.com/hlissner/emacs.d),
+but I've never managed to get [evil-mc](https://github.com/gabesoft/evil-mc) to work for
+me, and `multiple-cursors`
+[doesn't play nice with evil-mode](https://github.com/magnars/multiple-cursors.el/issues/17).
+
+So I made this little hack that uses `iedit-mode` to mimic
+[vim-multiedit](https://github.com/hlissner/vim-multiedit). It brings to Emacs a
+multiple selection implementation that emulates much of what Sublime Text (or Atom) offers;
+one that plays nice with evil-mode.
 
 ![evil-multiedit-match-all](/../screenshots/01.gif?raw=true)
 ![evil-multiedit-match-and-next](/../screenshots/02.gif?raw=true)
@@ -89,13 +101,3 @@ mode will invoke it.
   is invoked from normal mode. It takes no parameters and returns a cons cell (beg . end)
   containing the bounds of the region to mark.
 
-## Why not multiple-cursors or evil-mc?
-
-It could be the [over] complexity of my emacs.d, but I've never managed to get
-[evil-mc](https://github.com/gabesoft/evil-mc) to work for me, and `multiple-cursors`
-[doesn't play nice with evil-mode](https://github.com/magnars/multiple-cursors.el/issues/17).
-
-So I made this little hack that uses `iedit-mode` to mimic
-[vim-multiedit](https://github.com/hlissner/vim-multiedit). It brings to Emacs a
-multiple-cursors implementation that emulates much of what Sublime Text (or Atom) offers;
-one that plays nice with evil-mode.
