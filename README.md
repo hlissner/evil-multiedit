@@ -5,6 +5,9 @@ This plugin tries to fill that multi-cursor shaped gap in your heart.
 > Credit goes to [syl20bnr]() for his [evil-iedit-state]() plugin, which this plugin was
 > heavily inspired by.
 
+![evil-multiedit-match-all](/../screenshots/01.gif?raw=true)
+![evil-multiedit-match-and-next](/../screenshots/02.gif?raw=true)
+
 ## Installation
 
 `evil-multiedit` will be available on MELPA soon.
@@ -15,11 +18,8 @@ For now, download `evil-multiedit.el` somewhere in your `load-path`.
 
 ## Usage
 
-![evil-multiedit-match-all](/../screenshots/01.gif?raw=true)
-![evil-multiedit-match-and-next](/../screenshots/02.gif?raw=true)
-
-evil-multiedit *does not bind any new keys*, so as not to impose, so you will have to
-yourself. Here is my recommended configuration:
+Evil-multiedit *does not bind any new keys*, so you will have to yourself. Here is my
+recommended configuration:
 
 ```elisp
 ;; Highlights all matches of the selection in the buffer.
@@ -48,17 +48,17 @@ yourself. Here is my recommended configuration:
 (define-key evil-multiedit-insert-state-map (kbd "C-p") 'evil-multiedit-prev)
 ```
 
-Once you have regions highlighted, edit the regions however you like. `x`, `c`, `d`,
-insert edits; they will all be mirrored across all multiedit regions.
+Once regions are highlighted, edit them however you like. `x`, `c`, `d`, insert edits;
+changes will be mirrored across all multiedit regions.
 
 Many evil-mode motions/operators will have special behavior while the cursor is in an edit
 region:
 
 * `D`: clear the region
-* `C`: clear the region and go into insert mode
-* `A`: go into insert mode at the end of region
-* `I`: go into insert mode at the start of region
-* `V`: select the whole edit region
+* `C`: clear to end-of-region and go into insert mode
+* `A`: go into insert mode at end-of-region
+* `I`: go into insert mode at start-of-region
+* `V`: select the region
 * `gg`/`G`: go to the first/last region
 
 To disable these, set `evil-multiedit-dwim-motion-keys` to `nil` before loading
@@ -77,6 +77,18 @@ mode will invoke it.
 * `evil-multiedit-prev`
 * `evil-multiedit-abort`
 
+### Options
+
+* `evil-multiedit-dwim-motion-keys` (default: `t`): Whether or not to modify evil's motion
+  keys to act differently when the cursor is inside multiedit regions. Must be set before
+  evil-multiedit is loaded.
+* `evil-multiedit-ignore-indent-and-trailing` (default: `t`): When you match forward
+  whitespace and this is non-nil, leading and trailing whitespace will be ignored.
+* `evil-multiedit-thing-at-point-fn` (default `(lambda () (bounds-of-thing-at-point
+  'word))`): This function dictates what to grab from under the cursor if evil-multiedit
+  is invoked from normal mode. It takes no parameters and returns a cons cell (beg . end)
+  containing the bounds of the region to mark.
+
 ## Why not multiple-cursors or evil-mc?
 
 It could be the [over] complexity of my emacs.d, but I've never managed to get
@@ -87,8 +99,3 @@ So I made this little hack that uses `iedit-mode` to mimic
 [vim-multiedit](https://github.com/hlissner/vim-multiedit). It brings to Emacs a
 multiple-cursors implementation that emulates much of what Sublime Text (or Atom) offers;
 one that plays nice with evil-mode.
-
-## Known issues
-
-* `evil-multiedit` forcibly disables all the default `iedit` keybindings in
-  `iedit-occurrence-keymap-default`. This only matters if you use iedit directly, however.
