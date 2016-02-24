@@ -47,6 +47,9 @@ recommended configuration:
 (define-key evil-normal-state-map (kbd "M-D") 'evil-multiedit-match-and-prev)
 (define-key evil-visual-state-map (kbd "M-D") 'evil-multiedit-match-and-prev)
 
+;; Restore the last grou pof multiedit regions.
+(define-key evil-visual-state-map (kbd "C-M-D") 'evil-multiedit-restore)
+
 ;; RET will toggle the region under the cursor
 (define-key evil-multiedit-state-map (kbd "RET") 'evil-multiedit-toggle-or-restrict-region)
 
@@ -81,6 +84,7 @@ mode will invoke it.
 
 ### Functions
 
+* `evil-multiedit-restore`
 * `evil-multiedit-match-all`
 * `evil-multiedit-match-and-next`
 * `evil-multiedit-match-and-prev`

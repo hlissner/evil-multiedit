@@ -6,7 +6,7 @@
 ;; Maintainer: Henrik Lissner <henrik@lissner.net>
 ;; Created: February 20, 2016
 ;; Modified: February 24, 2016
-;; Version: 1.2.0
+;; Version: 1.2.1
 ;; Keywords: multiple cursors, editing, iedit
 ;; Homepage: https://github.com/hlissner/evil-multiedit
 ;; Package-Requires: ((emacs "24.4") (evil "1.2.10") (iedit "0.97") (cl-lib "0.5"))
@@ -42,6 +42,9 @@
 ;;     (define-key evil-normal-state-map (kbd "M-d") 'evil-multiedit-match-and-next)
 ;;     ;; Match selected region.
 ;;     (define-key evil-visual-state-map (kbd "M-d") 'evil-multiedit-match-and-next)
+;;
+;;     ;; Restore the last grou pof multiedit regions.
+;;     (define-key evil-visual-state-map (kbd "C-M-D") 'evil-multiedit-restore)
 ;;
 ;;     ;; Same as M-d but in reverse.
 ;;     (define-key evil-normal-state-map (kbd "M-D") 'evil-multiedit-match-and-prev)
@@ -97,7 +100,24 @@ the bounds of the region to mark."
 (defvar evil-multiedit--pt-first nil "The beginning of the current region")
 (defvar evil-multiedit--pt-index (cons 1 1) "The forward/backward search indices")
 
+(defvar evil-multiedit--last-overlays '() "List of regions from last multiedit.")
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;###autoload
+(defun evil-multiedit-restore ()
+  "Restore the last group of multiedit regions."
+  (interactive)
+  (iedit-mode 4)
+  (when evil-multiedit--last-overlays
+    (save-excursion
+      (mapc (lambda (ov)
+              (let ((beg (overlay-start ov)))
+                (unless (memq beg evil-multiedit--last-overlays)
+                  (goto-char beg)
+                  (iedit-toggle-selection))))
+            iedit-occurrences-overlays)))
+  (evil-multiedit-state))
 
 ;;;###autoload
 (defun evil-multiedit-match-all (&optional arg)
@@ -184,6 +204,9 @@ beneath the cursor, if one exists."
 (defun evil-multiedit-abort ()
   "Clear all multiedit regions, clean up and revert to normal state."
   (interactive)
+  (setq evil-multiedit--last-overlays '())
+  (mapc (lambda (ov) (push (overlay-start ov) evil-multiedit--last-overlays))
+        iedit-occurrences-overlays)
   (iedit-done)
   (evil-normal-state)
   (evil-multiedit--cleanup))
