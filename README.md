@@ -1,4 +1,5 @@
 # evil-multiedit
+[![MELPA](http://melpa.org/packages/evil-multiedit-badge.svg)](http://melpa.org/#/evil-multiedit)
 
 This plugin tries to fill that multi-cursor shaped gap in your heart.
 
@@ -21,9 +22,11 @@ one that plays nice with evil-mode.
 
 ## Installation
 
-`evil-multiedit` will be available on MELPA soon.
+The package is available on MELPA.
 
-For now, download `evil-multiedit.el` somewhere in your `load-path`.
+`M-x package-install RET evil-multiedit`
+
+Then load it up:
 
 `(require 'evil-multiedit)`
 

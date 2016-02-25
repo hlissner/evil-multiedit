@@ -15,24 +15,13 @@
 
 ;;; Commentary:
 ;;
-;; This plugin tries to fill that multi-cursor shaped gap in your heart by bringing
-;; Sublime Text (or Atom's) multiple cursor functionality to Emacs and evil-mode.
-;;
-;; Note: Credit goes to [syl20bnr]() for his [evil-iedit-state]() plugin, which this
-;; plugin was heavily inspired by.
-;;
-;; Installation:
-;;
-;;   `evil-multiedit` will be available on MELPA soon.
-;;
-;;   For now, download `evil-multiedit.el` somewhere in your `load-path`.
-;;
-;;     (require 'evil-multiedit)
+;; This plugin tries to fill that multi-cursor shaped gap in your heart, by integrating
+;; iedit-mode into evil-mode.
 ;;
 ;; Usage
 ;;
-;;   evil-multiedit *does not bind any new keys*, so as not to impose, so you will have to
-;;   yourself. Here is my recommended configuration:
+;;   Evil-multiedit *does not bind any new keys*, so you will have to yourself. Here is my
+;;   recommended configuration:
 ;;
 ;;     ;; Highlights all matches of the selection in the buffer.
 ;;     (define-key evil-visual-state-map "R" 'evil-multiedit-match-all)
@@ -43,12 +32,12 @@
 ;;     ;; Match selected region.
 ;;     (define-key evil-visual-state-map (kbd "M-d") 'evil-multiedit-match-and-next)
 ;;
-;;     ;; Restore the last grou pof multiedit regions.
-;;     (define-key evil-visual-state-map (kbd "C-M-D") 'evil-multiedit-restore)
-;;
 ;;     ;; Same as M-d but in reverse.
 ;;     (define-key evil-normal-state-map (kbd "M-D") 'evil-multiedit-match-and-prev)
 ;;     (define-key evil-visual-state-map (kbd "M-D") 'evil-multiedit-match-and-prev)
+;;
+;;     ;; Restore the last group of multiedit regions.
+;;     (define-key evil-visual-state-map (kbd "C-M-D") 'evil-multiedit-restore)
 ;;
 ;;     ;; RET will toggle the region under the cursor
 ;;     (define-key evil-multiedit-state-map (kbd "RET") 'evil-multiedit-toggle-or-restrict-region)
