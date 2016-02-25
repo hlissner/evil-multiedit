@@ -89,7 +89,8 @@ the bounds of the region to mark."
 (defvar evil-multiedit--pt-first nil "The beginning of the current region")
 (defvar evil-multiedit--pt-index (cons 1 1) "The forward/backward search indices")
 
-(defvar evil-multiedit--last-overlays '() "List of regions from last multiedit.")
+(defvar evil-multiedit--last-markers '() "List of markers from last multiedit.")
+(defvar evil-multiedit--dont-recall nil)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -98,20 +99,22 @@ the bounds of the region to mark."
   "Restore the last group of multiedit regions."
   (interactive)
   (iedit-mode 4)
-  (when evil-multiedit--last-overlays
-    (save-excursion
-      (mapc (lambda (ov)
-              (let ((beg (overlay-start ov)))
-                (unless (memq beg evil-multiedit--last-overlays)
-                  (goto-char beg)
-                  (iedit-toggle-selection))))
-            iedit-occurrences-overlays)))
+  (when evil-multiedit--last-markers
+    (let ((beg-list (mapcar (lambda (m) (marker-position m)) evil-multiedit--last-markers)))
+      (save-excursion
+        (mapc (lambda (ov)
+                (let ((beg (overlay-start ov)))
+                  (unless (memq beg beg-list)
+                    (goto-char beg)
+                    (iedit-toggle-selection))))
+              iedit-occurrences-overlays))))
   (evil-multiedit-state))
 
 ;;;###autoload
 (defun evil-multiedit-match-all (&optional arg)
   "Highlight all matches of the current selection as multiedit regions."
   (interactive "P")
+  (setq evil-multiedit--dont-recall t)
   (if (fboundp 'ahs-clear) (ahs-clear))
   (iedit-mode arg)
   (evil-multiedit-state))
@@ -193,9 +196,15 @@ beneath the cursor, if one exists."
 (defun evil-multiedit-abort ()
   "Clear all multiedit regions, clean up and revert to normal state."
   (interactive)
-  (setq evil-multiedit--last-overlays '())
-  (mapc (lambda (ov) (push (overlay-start ov) evil-multiedit--last-overlays))
-        iedit-occurrences-overlays)
+  (mapc (lambda (m) (set-marker m nil)) evil-multiedit--last-markers)
+  (if evil-multiedit--dont-recall
+      (setq evil-multiedit--last-markers '())
+    (mapc (lambda (ov)
+            (let ((m (make-marker)))
+              (set-marker-insertion-type m t)
+              (set-marker m (overlay-start ov))
+              (push m evil-multiedit--last-markers)))
+          iedit-occurrences-overlays))
   (iedit-done)
   (evil-normal-state)
   (evil-multiedit--cleanup))
@@ -203,7 +212,8 @@ beneath the cursor, if one exists."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun evil-multiedit--cleanup ()
-  (setq evil-multiedit--pt nil
+  (setq evil-multiedit--dont-recall nil
+        evil-multiedit--pt nil
         evil-multiedit--pt-first nil
         evil-multiedit--pt-index (cons 1 1)))
 
