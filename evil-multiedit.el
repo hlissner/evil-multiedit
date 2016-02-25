@@ -89,8 +89,9 @@ the bounds of the region to mark."
 (defvar evil-multiedit--pt-first nil "The beginning of the current region")
 (defvar evil-multiedit--pt-index (cons 1 1) "The forward/backward search indices")
 
-(defvar evil-multiedit--last-markers '() "List of markers from last multiedit.")
 (defvar evil-multiedit--dont-recall nil)
+(defvar evil-multiedit--last-markers '() "List of markers from last multiedit.")
+(make-variable-buffer-local 'evil-multiedit--last-markers)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
