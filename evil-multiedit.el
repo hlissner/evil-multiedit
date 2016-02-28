@@ -177,7 +177,8 @@ all regions outside the selection). If in any other mode, toggle the multiedit r
 beneath the cursor, if one exists."
   (interactive)
   (if (iedit-current-occurrence-string)
-      (cond ((evil-visual-state-p)
+      (cond ((or (evil-visual-state-p)
+                 (and beg end))
              (let ((current-prefix-arg '(4))
                    (beg (or beg (region-beginning)))
                    (end (or end (region-end))))
