@@ -257,7 +257,7 @@ beneath the cursor, if one exists."
 (evil-define-command evil-multiedit-ex-match (&optional beg end bang regexp)
   "Ex command for invoking evil-multiedit with a regular expression. The selected area is
 the boundary for matches. If BANG, invert `evil-multiedit-smart-match-boundaries'."
-  (interactive "<R><!><a>")
+  (interactive "<r><!><a>")
   (evil-multiedit-abort)
   (let ((evil-multiedit-smart-match-boundaries
          (if bang
