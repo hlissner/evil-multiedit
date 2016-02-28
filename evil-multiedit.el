@@ -5,11 +5,11 @@
 ;; Author: Henrik Lissner <http://github/hlissner>
 ;; Maintainer: Henrik Lissner <henrik@lissner.net>
 ;; Created: February 20, 2016
-;; Modified: February 25, 2016
-;; Version: 1.2.2
+;; Modified: February 28, 2016
+;; Version: 1.2.3
 ;; Keywords: multiple cursors, editing, iedit
 ;; Homepage: https://github.com/hlissner/evil-multiedit
-;; Package-Requires: ((emacs "24.4") (evil "1.2.10") (iedit "0.97") (cl-lib "0.5"))
+;; Package-Requires: ((emacs "24.4") (evil "1.0.8") (iedit "0.97") (cl-lib "0.5"))
 ;;
 ;; This file is not part of GNU Emacs.
 
@@ -36,6 +36,9 @@
 ;;     (define-key evil-normal-state-map (kbd "M-D") 'evil-multiedit-match-and-prev)
 ;;     (define-key evil-visual-state-map (kbd "M-D") 'evil-multiedit-match-and-prev)
 ;;
+;;     ;; OPTIONAL: If you prefer to grab symbols rather than words, use
+;;     ;; `evil-multiedit-match-symbol-and-next` (or prev).
+;;
 ;;     ;; Restore the last group of multiedit regions.
 ;;     (define-key evil-visual-state-map (kbd "C-M-D") 'evil-multiedit-restore)
 ;;
@@ -51,6 +54,9 @@
 ;;     (define-key evil-multiedit-state-map (kbd "C-p") 'evil-multiedit-prev)
 ;;     (define-key evil-multiedit-insert-state-map (kbd "C-n") 'evil-multiedit-next)
 ;;     (define-key evil-multiedit-insert-state-map (kbd "C-p") 'evil-multiedit-prev)
+;;
+;;     ;; Allows you to invoke evil-multiedit with a regular expression
+;;     (evil-ex-define-cmd "ie[dit]" 'evil-multiedit-ex-match)
 ;;
 ;;; Code:
 
@@ -84,6 +90,15 @@ from normal mode. It takes no parameters and returns a cons cell (beg . end) con
 the bounds of the region to mark."
   :group 'evil-multiedit
   :type 'function)
+
+(defcustom evil-multiedit-smart-match-boundaries t
+  "If non-nil, multiedit will try to be smart about matches when invoked from normal mode.
+E.g. 'evil-multiedit-match' will not match 'evil-multiedit-match-all', or 'i' will only
+match 'i' and not every individual i in, say, 'ignition'.
+
+If evil-multiedit is invoked from visual mode, this is ignored."
+  :group 'evil-multiedit
+  :type 'boolean)
 
 (defvar evil-multiedit--pt nil "The point of the first match")
 (defvar evil-multiedit--pt-first nil "The beginning of the current region")
@@ -123,46 +138,69 @@ regions."
     (setq evil-multiedit--dont-recall t)
     (evil-multiedit--start beg end (point-min) (point-max))))
 
+;;;###autoload (autoload 'evil-multiedit-match-symbol-and-next "evil-multiedit" nil t)
+(evil-define-command evil-multiedit-match-symbol-and-next (&optional count)
+  "Same as `evil-multiedit-match-and-next' if invoked from visual mode. From normal mode,
+it grabs whole symbols rather than words."
+  (interactive "<c>")
+  (let ((evil-multiedit-thing-at-point-fn (lambda () (bounds-of-thing-at-point 'symbol))))
+    (evil-multiedit-match-and-next count)))
+
+;;;###autoload (autoload 'evil-multiedit-match-symbol-and-prev "evil-multiedit" nil t)
+(evil-define-command evil-multiedit-match-symbol-and-prev (&optional count)
+  "Same as `evil-multiedit-match-and-prev' if invoked from visual mode. From normal mode,
+it grabs whole symbols rather than words."
+  (interactive "<c>")
+  (evil-multiedit-match-symbol-and-next (or (and count (* -1 count)) -1)))
+
 ;;;###autoload (autoload 'evil-multiedit-match-and-next "evil-multiedit" nil t)
 (evil-define-command evil-multiedit-match-and-next (&optional count)
-  "Emulates Sublime Text's (and Atom's) multiple cursors functionality by marking the word
-at point (or selection) and marking the next one on consecutive executions of this
-function."
+  "Marks the word at point (or, if in visual mode, the selection), then marking the next
+matches on consecutive runs of this function.
+
+Note: the matching behavior differs depending on if it was invoked from normal or visual mode.
+
+  + From normal mode: `evil-multiedit-thing-at-point-fn' is used to grab the match under
+    the cursor. Also: only whole word matches will be selected (see
+    `evil-multiedit-smart-match-boundaries').
+  + From visual mode, `evil-multiedit-smart-match-boundaries' is ignored, allowing for in-word
+    matches."
   (interactive "<c>")
-  (let ((backwards-p (and count (< count 0))))
-    (setq evil-ex-search-direction (if backwards-p 'backward 'forward))
-    (save-excursion
+  (dotimes (i (or (and count (abs count)) 1))
+    (let ((backwards-p (and count (< count 0))))
+      (setq evil-ex-search-direction (if backwards-p 'backward 'forward))
+      (unless (iedit-find-current-occurrence-overlay)
+        (evil-multiedit-abort t))
       (if evil-multiedit--pt-first
-          (let ((i (if backwards-p (cdr evil-multiedit--pt-index) (car evil-multiedit--pt-index)))
-                (is-whitespace (string-match-p "^[ \t]+$" iedit-initial-string-local)))
-            (goto-char evil-multiedit--pt)
-            (while (and (> i 0)
-                        (setq pt (evil-ex-find-next nil (if backwards-p 'backward 'forward) t)))
-              (unless (and is-whitespace
-                           evil-multiedit-ignore-indent-and-trailing
-                           (< (point) (save-excursion (back-to-indentation) (point))))
-                (cl-decf i)))
-            (unless (iedit-find-current-occurrence-overlay)
-              (iedit-toggle-selection))
-            (if (> i 0)
-                (message "No more matches!")
-              (cl-incf (if backwards-p
-                           (cdr evil-multiedit--pt-index)
-                         (car evil-multiedit--pt-index)))))
-        (let* ((bounds (if (evil-visual-state-p)
-                           (cons evil-visual-beginning evil-visual-end)
-                         (funcall evil-multiedit-thing-at-point-fn)))
+          (save-excursion
+            (let ((i (if backwards-p (cdr evil-multiedit--pt-index) (car evil-multiedit--pt-index)))
+                  (is-whitespace (string-match-p "^[ \t]+$" iedit-initial-string-local)))
+              (goto-char evil-multiedit--pt)
+              (while (and (> i 0)
+                          (setq pt (evil-ex-find-next nil (if backwards-p 'backward 'forward) t)))
+                (unless (and is-whitespace
+                             evil-multiedit-ignore-indent-and-trailing
+                             (< (point) (save-excursion (back-to-indentation) (point))))
+                  (cl-decf i)))
+              (unless (iedit-find-current-occurrence-overlay)
+                (iedit-toggle-selection))
+              (if (> i 0)
+                  (message "No more matches!")
+                (cl-incf (if backwards-p
+                             (cdr evil-multiedit--pt-index)
+                           (car evil-multiedit--pt-index)))
+                (message "Added match (out of %s)" (length iedit-occurrences-overlays)))))
+        (let* ((bounds (evil-multiedit--match-bounds))
                (beg (car bounds))
                (end (cdr bounds))
-               (occurrence (buffer-substring-no-properties (car bounds) (cdr bounds))))
+               occurrence)
           (setq evil-multiedit--pt-first (if backwards-p beg end)
                 evil-multiedit--pt (if backwards-p beg end))
           (evil-normal-state)
-          (setq iedit-initial-string-local occurrence)
-          (iedit-start (iedit-regexp-quote occurrence) beg end)
-          (evil-multiedit-state)
-          (setq evil-ex-search-pattern (evil-ex-make-search-pattern (regexp-quote occurrence)))
-          (evil-ex-find-next nil nil t))))))
+          (save-excursion
+            (setq occurrence (evil-multiedit--start beg end))
+            (setq evil-ex-search-pattern (evil-ex-make-search-pattern occurrence))
+            (evil-ex-find-next nil nil t)))))))
 
 ;;;###autoload (autoload 'evil-multiedit-match-and-prev "evil-multiedit" nil t)
 (evil-define-command evil-multiedit-match-and-prev (&optional count)
@@ -198,7 +236,7 @@ beneath the cursor, if one exists."
   "Jump to the previous multiedit region.")
 
 ;;;###autoload
-(defun evil-multiedit-abort ()
+(defun evil-multiedit-abort (&optional inhibit-normal)
   "Clear all multiedit regions, clean up and revert to normal state."
   (interactive)
   (mapc (lambda (m) (set-marker m nil)) evil-multiedit--last-markers)
@@ -211,38 +249,51 @@ beneath the cursor, if one exists."
               (push m evil-multiedit--last-markers)))
           iedit-occurrences-overlays))
   (iedit-done)
-  (evil-normal-state)
+  (unless inhibit-normal
+    (evil-normal-state))
   (evil-multiedit--cleanup))
 
 ;;;###autoload (autoload 'evil-multiedit-ex-match "evil-multiedit" nil t)
-(evil-define-command evil-multiedit-ex-match (&optional beg end regexp)
+(evil-define-command evil-multiedit-ex-match (&optional beg end bang regexp)
   "Ex command for invoking evil-multiedit with a regular expression. The selected area is
-the boundary for matches."
-  (interactive "<R><a>")
+the boundary for matches. If BANG, invert `evil-multiedit-smart-match-boundaries'."
+  (interactive "<R><!><a>")
   (evil-multiedit-abort)
-  (if regexp
-      (evil-multiedit--start-regexp regexp beg end)
-    (evil-multiedit-restore)
-    (when (and beg end)
-      (evil-multiedit-toggle-or-restrict-region beg end))))
+  (let ((evil-multiedit-smart-match-boundaries
+         (if bang
+             (not evil-multiedit-smart-match-boundaries)
+           evil-multiedit-smart-match-boundaries)))
+    (if regexp
+        (evil-multiedit--start-regexp regexp beg end)
+      (evil-multiedit-restore)
+      (when (and beg end)
+        (evil-multiedit-toggle-or-restrict-region beg end)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun evil-multiedit--match-bounds ()
-  (if (evil-visual-state-p)
-      (cons evil-visual-beginning evil-visual-end)
-    (funcall evil-multiedit-thing-at-point-fn)))
+  (cond ((evil-visual-state-p)
+         (cons evil-visual-beginning evil-visual-end))
+        ((looking-at-p "[^a-zA-Z0-9]")
+         (cons (point) (1+ (point))))
+        (t
+         (funcall evil-multiedit-thing-at-point-fn))))
 
 (defun evil-multiedit--start (obeg oend &optional beg end)
-  (let ((occurrence (regexp-quote (buffer-substring-no-properties obeg oend))))
-    (when evil-multiedit-smart-match-boundaries
-      (when (and (goto-char (1- obeg))
-                 (looking-at "[^a-zA-Z0-9_-]"))
-        (setq occurrence (concat "\\<" occurrence)))
-      (when (and (goto-char (1+ oend))
-                 (looking-at "[^a-zA-Z0-9_-]"))
-        (setq occurrence (concat occurrence "\\>"))))
-    (evil-multiedit--start-regexp occurrence (or beg obeg) (or end oend))))
+  (let* ((occurrence (buffer-substring-no-properties obeg oend))
+         (sym-p (string-match-p "^[^a-zA-Z0-9]$" occurrence)))
+    (when occurrence
+      (setq occurrence (regexp-quote occurrence))
+      (when (and (not (evil-visual-state-p))
+                 evil-multiedit-smart-match-boundaries
+                 (not sym-p))
+        (when (and (goto-char (1- obeg))
+                   (looking-at "[^a-zA-Z0-9_-]"))
+          (setq occurrence (concat "\\<" occurrence)))
+        (when (and (goto-char oend)
+                   (looking-at "[^a-zA-Z0-9_-]"))
+          (setq occurrence (concat occurrence "\\>"))))
+      (evil-multiedit--start-regexp occurrence (or beg obeg) (or end oend)))))
 
 (defun evil-multiedit--start-regexp (regexp &optional beg end)
   (setq iedit-initial-string-local regexp)
@@ -391,32 +442,31 @@ If INTERACTIVE is non-nil then COMMAND is called interactively."
   :cursor (bar . 2)
   :message "-- MULTIEDIT INSERT --")
 
-(let ((me-map evil-multiedit-state-map)
-      (me-imap evil-multiedit-insert-state-map))
-  (when evil-multiedit-dwim-motion-keys
-    (define-key me-map "$"                   'evil-multiedit--end-of-line)
-    (evil-redirect-digit-argument me-map "0" 'evil-multiedit--beginning-of-line)
+(when evil-multiedit-dwim-motion-keys
+  (let ((map evil-multiedit-insert-state-map))
+    (define-key map (kbd "C-g") 'evil-multiedit-abort)
+    (define-key map [escape]    'evil-multiedit-state))
 
-    (define-key me-map "a"         'evil-multiedit--append)
-    (define-key me-map "A"         'evil-multiedit--append-line)
-    (define-key me-map "c"         'evil-multiedit--change)
-    (define-key me-map "C"         'evil-multiedit--substitute)
-    (define-key me-map "D"         'iedit-delete-occurrences)
-    (define-key me-map "gg"        'iedit-goto-first-occurrence)
-    (define-key me-map "G"         'iedit-goto-last-occurrence)
-    (define-key me-map "i"         'evil-multiedit-insert-state)
-    (define-key me-map "I"         'evil-multiedit--insert-line)
-    (define-key me-map "o"         'evil-multiedit--open-below)
-    (define-key me-map "O"         'evil-multiedit--open-above)
-    (define-key me-map "p"         'evil-multiedit--paste-replace)
-    (define-key me-map (kbd "C-g") 'evil-multiedit-abort)
-    (define-key me-map [escape]    'evil-multiedit-abort)
-    (define-key me-map "V"         'evil-multiedit--visual-line)
-
-    (define-key me-map "za"        'iedit-toggle-unmatched-lines-visible)
-
-    (define-key me-imap (kbd "C-g") 'evil-multiedit-abort)
-    (define-key me-imap [escape]    'evil-multiedit-state)))
+  (let ((map evil-multiedit-state-map))
+    (evil-redirect-digit-argument map "0" 'evil-multiedit--beginning-of-line)
+    (define-key map "^"                   'evil-multiedit--beginning-of-line)
+    (define-key map "$"                   'evil-multiedit--end-of-line)
+    (define-key map "a"         'evil-multiedit--append)
+    (define-key map "A"         'evil-multiedit--append-line)
+    (define-key map "c"         'evil-multiedit--change)
+    (define-key map "C"         'evil-multiedit--substitute)
+    (define-key map "D"         'iedit-delete-occurrences)
+    (define-key map "gg"        'iedit-goto-first-occurrence)
+    (define-key map "G"         'iedit-goto-last-occurrence)
+    (define-key map "i"         'evil-multiedit-insert-state)
+    (define-key map "I"         'evil-multiedit--insert-line)
+    (define-key map "o"         'evil-multiedit--open-below)
+    (define-key map "O"         'evil-multiedit--open-above)
+    (define-key map "p"         'evil-multiedit--paste-replace)
+    (define-key map (kbd "C-g") 'evil-multiedit-abort)
+    (define-key map [escape]    'evil-multiedit-abort)
+    (define-key map "V"         'evil-multiedit--visual-line)
+    (define-key map "za"        'iedit-toggle-unmatched-lines-visible)))
 
 (provide 'evil-multiedit)
 ;;; evil-multiedit.el ends here

@@ -64,7 +64,7 @@ recommended configuration:
 (define-key evil-multiedit-insert-state-map (kbd "C-n") 'evil-multiedit-next)
 (define-key evil-multiedit-insert-state-map (kbd "C-p") 'evil-multiedit-prev)
 
-;; Allows you to invoke evil-multiedit with a regular expression
+;; Ex command that allows you to invoke evil-multiedit with a regular expression, e.g.
 (evil-ex-define-cmd "ie[dit]" 'evil-multiedit-ex-match)
 ```
 
@@ -93,10 +93,13 @@ mode will invoke it.
 * `evil-multiedit-match-all`
 * `evil-multiedit-match-and-next`
 * `evil-multiedit-match-and-prev`
+* `evil-multiedit-match-symbol-and-next`
+* `evil-multiedit-match-symbol-and-prev`
 * `evil-multiedit-toggle-or-restrict-region`
 * `evil-multiedit-next`
 * `evil-multiedit-prev`
 * `evil-multiedit-abort`
+* `evil-multiedit-ex-match`
 
 ### Options
 
@@ -109,4 +112,10 @@ mode will invoke it.
   'word))`): This function dictates what to grab from under the cursor if evil-multiedit
   is invoked from normal mode. It takes no parameters and returns a cons cell (beg . end)
   containing the bounds of the region to mark.
+* `evil-multiedit-smart-match-boundaries` (default `t`): If non-nil, multiedit will try to
+  be smart about match boundaries when invoked from normal mode. E.g.
+  + 'evil-multiedit-match' will not match 'evil-multiedit-match-all'
+  + 'i' will only match 'i' and not every individual i in 'ignition'.
+
+  **NOTE:** If evil-multiedit is invoked from visual mode, this is ignored.
 
