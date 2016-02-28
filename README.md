@@ -1,22 +1,21 @@
 # evil-multiedit
 [![MELPA](http://melpa.org/packages/evil-multiedit-badge.svg)](http://melpa.org/#/evil-multiedit)
 
-This plugin tries to fill that multi-cursor shaped gap in your heart.
+This plugin tries to fill that multi-cursor shaped hole in your heart.
 
-Credit goes to [syl20bnr]() for his [evil-iedit-state]() plugin, which this plugin was
-heavily inspired by.
+> Credit goes to [syl20bnr] for his [evil-iedit-state] plugin, which this
+  plugin was heavily inspired by.
 
-> Why not multiple-cursors or evil-mc?
+## Why not multiple-cursors or evil-mc?
 
-It could be the [over] complexity of my [emacs.d](https://github.com/hlissner/emacs.d),
-but I've never managed to get [evil-mc](https://github.com/gabesoft/evil-mc) to work for
-me, and `multiple-cursors`
-[doesn't play nice with evil-mode](https://github.com/magnars/multiple-cursors.el/issues/17).
+It could be the [over] complexity of my [emacs.d], but I've never managed to
+get [evil-mc] to work for me, and
+`multiple-cursors` [doesn't play nice with
+evil-mode](https://github.com/magnars/multiple-cursors.el/issues/17).
 
-So I made this little hack that uses `iedit-mode` to mimic
-[vim-multiedit](https://github.com/hlissner/vim-multiedit). It brings to Emacs a
-multiple selection implementation that emulates much of what Sublime Text (or Atom) offers;
-one that plays nice with evil-mode.
+So I hacked this plugin together to integrate `iedit-mode` into evil-mode. It takes
+after [vim-multiedit], offers an approach to multiple cursors like Sublime Text (or
+Atom) have, and compliments evil's in-built column and line-wise editing operations.
 
 ![evil-multiedit](/../screenshots/main.gif?raw=true)
 
@@ -49,6 +48,9 @@ recommended configuration:
 (define-key evil-normal-state-map (kbd "M-D") 'evil-multiedit-match-and-prev)
 (define-key evil-visual-state-map (kbd "M-D") 'evil-multiedit-match-and-prev)
 
+;; OPTIONAL: If you prefer to grab symbols rather than words, use
+;; `evil-multiedit-match-symbol-and-next` (or prev).
+
 ;; Restore the last group of multiedit regions.
 (define-key evil-visual-state-map (kbd "C-M-D") 'evil-multiedit-restore)
 
@@ -68,17 +70,18 @@ recommended configuration:
 (evil-ex-define-cmd "ie[dit]" 'evil-multiedit-ex-match)
 ```
 
-Once regions are highlighted, edit them however you like. `x`, `c`, `d`, insert edits;
-changes will be mirrored across all multiedit regions.
+Once regions are highlighted, changes are mirrored across them all.
 
-Many evil-mode motions/operators will have special behavior while the cursor is in an edit
-region:
+Many evil-mode motions/operators will have slightly different behavior while
+evil-multiedit is active or the cursor is in an iedit region:
 
 * `D`: clear the region
 * `C`: clear to end-of-region and go into insert mode
 * `A`: go into insert mode at end-of-region
 * `I`: go into insert mode at start-of-region
 * `V`: select the region
+* `$`: go to end-of-region
+* `0`/`^`: go to start-of-region
 * `gg`/`G`: go to the first/last region
 
 To disable these, set `evil-multiedit-dwim-motion-keys` to `nil` before loading
@@ -87,7 +90,12 @@ evil-multiedit.
 NOTE: No need to bind a key for `evil-multiedit-abort`, pressing <kbd>ESC</kbd> in normal
 mode will invoke it.
 
-### Functions
+### Ex Command
+
+Use `(evil-ex-define-cmd "ie[dit]" 'evil-multiedit-ex-match)` so you can use
+`:iedit <REGEX>` to highlight matches with a regular expression.
+
+### Commands
 
 * `evil-multiedit-restore`
 * `evil-multiedit-match-all`
@@ -119,3 +127,10 @@ mode will invoke it.
 
   **NOTE:** If evil-multiedit is invoked from visual mode, this is ignored.
 
+
+[evil-mode]: https://bitbucket.org/lyro/evil/wiki/Home
+[vim-multiedit]: https://github.com/hlissner/vim-multiedit
+[syl20bnr]: https://github.com/syl20bnr
+[evil-iedit-state]: https://github.com/syl20bnr/evil-iedit-state
+[emacs.d]: https://github.com/hlissner/emacs.d
+[evil-mc]: https://github.com/gabesoft/evil-mc
