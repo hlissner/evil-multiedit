@@ -63,6 +63,9 @@ recommended configuration:
 (define-key evil-multiedit-state-map (kbd "C-p") 'evil-multiedit-prev)
 (define-key evil-multiedit-insert-state-map (kbd "C-n") 'evil-multiedit-next)
 (define-key evil-multiedit-insert-state-map (kbd "C-p") 'evil-multiedit-prev)
+
+;; Allows you to invoke evil-multiedit with a regular expression
+(evil-ex-define-cmd "ie[dit]" 'evil-multiedit-ex-match)
 ```
 
 Once regions are highlighted, edit them however you like. `x`, `c`, `d`, insert edits;

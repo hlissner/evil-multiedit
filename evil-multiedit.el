@@ -213,6 +213,18 @@ beneath the cursor, if one exists."
   (evil-normal-state)
   (evil-multiedit--cleanup))
 
+;;;###autoload (autoload 'evil-multiedit-ex-match "evil-multiedit" nil t)
+(evil-define-command evil-multiedit-ex-match (&optional beg end regexp)
+  "Ex command for invoking evil-multiedit with a regular expression. The selected area is
+the boundary for matches."
+  (interactive "<R><a>")
+  (evil-multiedit-abort)
+  (if regexp
+      (evil-multiedit--start-regexp regexp beg end)
+    (evil-multiedit-restore)
+    (when (and beg end)
+      (evil-multiedit-toggle-or-restrict-region beg end))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun evil-multiedit--match-bounds ()
