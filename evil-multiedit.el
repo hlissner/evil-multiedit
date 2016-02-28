@@ -112,10 +112,10 @@ the bounds of the region to mark."
   (evil-multiedit-state))
 
 ;;;###autoload
-(defun evil-multiedit-match-all (&optional arg)
-  "Highlight all matches of the current selection as multiedit regions."
-  (interactive "P")
-  (setq evil-multiedit--dont-recall t)
+(defun evil-multiedit-match-all ()
+  "Highlight all matches of the current selection (or symbol under pointer) as multiedit
+regions."
+  (interactive)
   (if (fboundp 'ahs-clear) (ahs-clear))
   (iedit-mode arg)
   (evil-multiedit-state))
