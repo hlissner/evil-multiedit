@@ -117,8 +117,11 @@ the bounds of the region to mark."
 regions."
   (interactive)
   (if (fboundp 'ahs-clear) (ahs-clear))
-  (iedit-mode arg)
-  (evil-multiedit-state))
+  (let* ((bounds (evil-multiedit--match-bounds))
+         (beg (car bounds))
+         (end (cdr bounds)))
+    (setq evil-multiedit--dont-recall t)
+    (evil-multiedit--start beg end (point-min) (point-max))))
 
 ;;;###autoload (autoload 'evil-multiedit-match-and-next "evil-multiedit" nil t)
 (evil-define-command evil-multiedit-match-and-next (&optional count)
@@ -211,6 +214,28 @@ beneath the cursor, if one exists."
   (evil-multiedit--cleanup))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun evil-multiedit--match-bounds ()
+  (if (evil-visual-state-p)
+      (cons evil-visual-beginning evil-visual-end)
+    (funcall evil-multiedit-thing-at-point-fn)))
+
+(defun evil-multiedit--start (obeg oend &optional beg end)
+  (let ((occurrence (regexp-quote (buffer-substring-no-properties obeg oend))))
+    (when evil-multiedit-smart-match-boundaries
+      (when (and (goto-char (1- obeg))
+                 (looking-at "[^a-zA-Z0-9_-]"))
+        (setq occurrence (concat "\\<" occurrence)))
+      (when (and (goto-char (1+ oend))
+                 (looking-at "[^a-zA-Z0-9_-]"))
+        (setq occurrence (concat occurrence "\\>"))))
+    (evil-multiedit--start-regexp occurrence (or beg obeg) (or end oend))))
+
+(defun evil-multiedit--start-regexp (regexp &optional beg end)
+  (setq iedit-initial-string-local regexp)
+  (iedit-start regexp beg end)
+  (evil-multiedit-state)
+  regexp)
 
 (defun evil-multiedit--cleanup ()
   (setq evil-multiedit--dont-recall nil
