@@ -333,9 +333,9 @@ If INTERACTIVE is non-nil then COMMAND is called interactively."
         (goto-char (overlay-end overlay))
       (call-interactively 'evil-end-of-line))))
 
-(defun evil-multiedit--beginning-of-line (count)
+(defun evil-multiedit--beginning-of-line ()
   "Go to the beginning of the current overlay."
-  (interactive "p")
+  (interactive)
   (evil-multiedit--goto-overlay-start))
 
 (defun evil-multiedit--end-of-line ()
