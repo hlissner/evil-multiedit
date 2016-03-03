@@ -100,8 +100,8 @@ If evil-multiedit is invoked from visual mode, this is ignored."
   :group 'evil-multiedit
   :type 'boolean)
 
-(defvar evil-multiedit--pt nil "The point of the first match")
-(defvar evil-multiedit--pt-first nil "The beginning of the current region")
+(defvar evil-multiedit--pt-end nil "The end of the first match")
+(defvar evil-multiedit--pt-beg nil "The beginning of the first region")
 (defvar evil-multiedit--pt-index (cons 1 1) "The forward/backward search indices")
 
 (defvar evil-multiedit--dont-recall nil)
@@ -171,7 +171,7 @@ Note: the matching behavior differs depending on if it was invoked from normal o
       (setq evil-ex-search-direction (if backwards-p 'backward 'forward))
       (unless (iedit-find-current-occurrence-overlay)
         (evil-multiedit-abort t))
-      (if evil-multiedit--pt-first
+      (if evil-multiedit--pt-beg
           (save-excursion
             (let ((i (if backwards-p (cdr evil-multiedit--pt-index) (car evil-multiedit--pt-index)))
                   (is-whitespace (string-match-p "^[ \t]+$" iedit-initial-string-local)))
@@ -194,13 +194,14 @@ Note: the matching behavior differs depending on if it was invoked from normal o
                (beg (car bounds))
                (end (cdr bounds))
                occurrence)
-          (setq evil-multiedit--pt-first (if backwards-p beg end)
-                evil-multiedit--pt (if backwards-p beg end))
+          (setq evil-multiedit--pt-beg beg
+                evil-multiedit--pt-end end)
           (evil-normal-state)
           (save-excursion
             (setq occurrence (evil-multiedit--start beg end))
             (setq evil-ex-search-pattern (evil-ex-make-search-pattern occurrence))
-            (evil-ex-find-next nil nil t)))))))
+            (evil-ex-find-next nil nil t))))))
+  (length iedit-occurrences-overlays))
 
 ;;;###autoload (autoload 'evil-multiedit-match-and-prev "evil-multiedit" nil t)
 (evil-define-command evil-multiedit-match-and-prev (&optional count)
@@ -303,8 +304,8 @@ the boundary for matches. If BANG, invert `evil-multiedit-smart-match-boundaries
 
 (defun evil-multiedit--cleanup ()
   (setq evil-multiedit--dont-recall nil
-        evil-multiedit--pt nil
-        evil-multiedit--pt-first nil
+        evil-multiedit--pt-end nil
+        evil-multiedit--pt-beg nil
         evil-multiedit--pt-index (cons 1 1)))
 
 (defmacro evil-multiedit--switch-to-insert-state-after (command &optional interactive)
