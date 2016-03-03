@@ -134,7 +134,8 @@ regions."
   (if (fboundp 'ahs-clear) (ahs-clear))
   (let* ((bounds (evil-multiedit--match-bounds))
          (beg (car bounds))
-         (end (cdr bounds)))
+         (end (cdr bounds))
+         evil-multiedit-smart-match-boundaries)
     (setq evil-multiedit--dont-recall t)
     (evil-multiedit--start beg end (point-min) (point-max))))
 
