@@ -5,8 +5,8 @@
 ;; Author: Henrik Lissner <http://github/hlissner>
 ;; Maintainer: Henrik Lissner <henrik@lissner.net>
 ;; Created: February 20, 2016
-;; Modified: February 28, 2016
-;; Version: 1.2.3
+;; Modified: March 2, 2016
+;; Version: 1.2.4
 ;; Keywords: multiple cursors, editing, iedit
 ;; Homepage: https://github.com/hlissner/evil-multiedit
 ;; Package-Requires: ((emacs "24.4") (evil "1.0.8") (iedit "0.97") (cl-lib "0.5"))
