@@ -167,7 +167,8 @@ Note: the matching behavior differs depending on if it was invoked from normal o
     matches."
   (interactive "<c>")
   (dotimes (i (or (and count (abs count)) 1))
-    (let ((backwards-p (and count (< count 0))))
+    (let ((backwards-p (and count (< count 0)))
+          (evil-multiedit-smart-match-boundaries (not (evil-visual-state-p))))
       (setq evil-ex-search-direction (if backwards-p 'backward 'forward))
       (unless (iedit-find-current-occurrence-overlay)
         (evil-multiedit-abort t))
@@ -285,14 +286,13 @@ the boundary for matches. If BANG, invert `evil-multiedit-smart-match-boundaries
          (sym-p (string-match-p "^[^a-zA-Z0-9]$" occurrence)))
     (when occurrence
       (setq occurrence (regexp-quote occurrence))
-      (when (and (not (evil-visual-state-p))
-                 evil-multiedit-smart-match-boundaries
+      (when (and evil-multiedit-smart-match-boundaries
                  (not sym-p))
         (when (and (goto-char (1- obeg))
-                   (looking-at "[^a-zA-Z0-9_-]"))
+                   (looking-at "[^a-zA-Z0-9]"))
           (setq occurrence (concat "\\<" occurrence)))
         (when (and (goto-char oend)
-                   (looking-at "[^a-zA-Z0-9_-]"))
+                   (looking-at "[^a-zA-Z0-9]"))
           (setq occurrence (concat occurrence "\\>"))))
       (evil-multiedit--start-regexp occurrence (or beg obeg) (or end oend)))))
 
