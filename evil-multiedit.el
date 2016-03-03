@@ -173,19 +173,19 @@ Note: the matching behavior differs depending on if it was invoked from normal o
         (evil-multiedit-abort t))
       (if evil-multiedit--pt-beg
           (save-excursion
-            (let ((i (if backwards-p (cdr evil-multiedit--pt-index) (car evil-multiedit--pt-index)))
+            (let ((j (if backwards-p (cdr evil-multiedit--pt-index) (car evil-multiedit--pt-index)))
                   (is-whitespace (string-match-p "^[ \t]+$" iedit-initial-string-local)))
-              (goto-char evil-multiedit--pt)
-              (while (and (> i 0)
+              (goto-char (if backwards-p evil-multiedit--pt-beg evil-multiedit--pt-end))
+              (while (and (> j 0)
                           (setq pt (evil-ex-find-next nil (if backwards-p 'backward 'forward) t)))
                 (unless (and is-whitespace
                              evil-multiedit-ignore-indent-and-trailing
                              (< (point) (save-excursion (back-to-indentation) (point))))
-                  (cl-decf i)))
+                  (cl-decf j)))
               (unless (iedit-find-current-occurrence-overlay)
                 (iedit-toggle-selection))
-              (if (> i 0)
-                  (message "No more matches!")
+              (if (> j 0)
+                  (user-error "No more matches!")
                 (cl-incf (if backwards-p
                              (cdr evil-multiedit--pt-index)
                            (car evil-multiedit--pt-index)))
