@@ -135,5 +135,5 @@ Use `(evil-ex-define-cmd "ie[dit]" 'evil-multiedit-ex-match)` so you can use
 [vim-multiedit]: https://github.com/hlissner/vim-multiedit
 [syl20bnr]: https://github.com/syl20bnr
 [evil-iedit-state]: https://github.com/syl20bnr/evil-iedit-state
-[emacs.d]: https://github.com/hlissner/emacs.d
+[emacs.d]: https://github.com/hlissner/.emacs.d
 [evil-mc]: https://github.com/gabesoft/evil-mc
