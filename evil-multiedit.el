@@ -6,7 +6,7 @@
 ;; Maintainer: Henrik Lissner <henrik@lissner.net>
 ;; Created: February 20, 2016
 ;; Modified: April 12, 2016
-;; Version: 1.2.5
+;; Version: 1.2.6
 ;; Keywords: multiple cursors, editing, iedit
 ;; Homepage: https://github.com/hlissner/evil-multiedit
 ;; Package-Requires: ((emacs "24.4") (evil "1.0.8") (iedit "0.97") (cl-lib "0.5"))
@@ -418,7 +418,9 @@ If INTERACTIVE is non-nil then COMMAND is called interactively."
   (remove-hook 'kbd-macro-termination-hook 'iedit-done t)
   (remove-hook 'change-major-mode-hook 'iedit-done t)
   (remove-hook 'iedit-aborting-hook 'iedit-done t)
-  (run-hooks 'iedit-mode-end-hook))
+  (run-hooks 'iedit-mode-end-hook)
+  (advice-remove 'evil-force-normal-state 'evil-multiedit-abort)
+  (advice-remove 'iedit-done 'evil-multiedit*iedit-done))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -428,13 +430,10 @@ If INTERACTIVE is non-nil then COMMAND is called interactively."
   :enable (normal)
   :cursor box
   :message "-- MULTIEDIT --"
-  (if (eq evil-state 'multiedit)
-      (progn
-        (advice-add 'iedit-done :override 'evil-multiedit*iedit-done)
-        (advice-add 'evil-force-normal-state :before 'evil-multiedit-abort)
-        (if (evil-replace-state-p) (call-interactively 'iedit-mode)))
-    (evil-multiedit-abort t)
-    (advice-remove 'iedit-done 'evil-multiedit*iedit-done)))
+  (when (eq evil-state 'multiedit)
+    (advice-add 'iedit-done :override 'evil-multiedit*iedit-done)
+    (advice-add 'evil-force-normal-state :before 'evil-multiedit-abort)
+    (if (evil-replace-state-p) (call-interactively 'iedit-mode))))
 
 (evil-define-state multiedit-insert
   "Replace insert state in `iedit state'."
