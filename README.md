@@ -34,8 +34,8 @@ Then load it up:
 
 ## Usage
 
-Evil-multiedit *does not bind any new keys*, so you will have to yourself. Here is my
-recommended configuration:
+Evil-multiedit does not automatically bind any keys. Call
+`(evil-multiedit-default-keybinds)` to bind my recommended configuration:
 
 ```elisp
 ;; Highlights all matches of the selection in the buffer.

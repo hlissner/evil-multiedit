@@ -425,6 +425,22 @@ If INTERACTIVE is non-nil then COMMAND is called interactively."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defun evil-multiedit-default-keybinds ()
+  "Sets up the default keybindings for `evil-multiedit'."
+  (define-key evil-visual-state-map "R" 'evil-multiedit-match-all)
+  (define-key evil-normal-state-map (kbd "M-d") 'evil-multiedit-match-and-next)
+  (define-key evil-visual-state-map (kbd "M-d") 'evil-multiedit-match-and-next)
+  (define-key evil-normal-state-map (kbd "M-D") 'evil-multiedit-match-and-prev)
+  (define-key evil-visual-state-map (kbd "M-D") 'evil-multiedit-match-and-prev)
+  (define-key evil-visual-state-map (kbd "C-M-D") 'evil-multiedit-restore)
+  (define-key evil-multiedit-state-map (kbd "RET") 'evil-multiedit-toggle-or-restrict-region)
+  (define-key evil-visual-state-map (kbd "RET") 'evil-multiedit-toggle-or-restrict-region)
+  (define-key evil-multiedit-state-map (kbd "C-n") 'evil-multiedit-next)
+  (define-key evil-multiedit-state-map (kbd "C-p") 'evil-multiedit-prev)
+  (define-key evil-multiedit-insert-state-map (kbd "C-n") 'evil-multiedit-next)
+  (define-key evil-multiedit-insert-state-map (kbd "C-p") 'evil-multiedit-prev)
+  (evil-ex-define-cmd "ie[dit]" 'evil-multiedit-ex-match))
+
 (evil-define-state multiedit
   "`multiedit state' interfacing iedit mode."
   :tag " <ME> "
