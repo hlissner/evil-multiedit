@@ -61,6 +61,7 @@
 ;;; Code:
 
 (defvar iedit-occurrence-keymap-default (make-sparse-keymap))
+(defvar iedit-overlay-priority 0)
 
 (require 'evil)
 (require 'iedit)
