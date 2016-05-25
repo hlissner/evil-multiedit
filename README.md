@@ -1,26 +1,27 @@
-# evil-multiedit
 [![MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 [![MELPA](http://melpa.org/packages/evil-multiedit-badge.svg)](http://melpa.org/#/evil-multiedit)
 [![MELPA Stable](http://stable.melpa.org/packages/evil-multiedit-badge.svg)](http://stable.melpa.org/#/evil-multiedit)
 [![Build Status](https://travis-ci.org/hlissner/evil-multiedit.png?branch=master)](https://travis-ci.org/hlissner/evil-multiedit)
 
+# evil-multiedit
+
 This plugin tries to fill that multi-cursor shaped hole in your heart.
 
-> Credit goes to [syl20bnr] for his [evil-iedit-state] plugin, which this
-  plugin was heavily inspired by.
+> Credit goes to [syl20bnr] for his [evil-iedit-state] plugin, which this plugin
+> was heavily inspired by.
 
 ## Why not multiple-cursors or evil-mc?
 
-It could be the [over] complexity of my [emacs.d], but I've never managed to
-get [evil-mc] to work for me, and
-`multiple-cursors` [doesn't play nice with
-evil-mode](https://github.com/magnars/multiple-cursors.el/issues/17).
+It could be the [over] complexity of my [emacs.d], but I've never managed to get
+[evil-mc] to work for me, and `multiple-cursors`
+[doesn't play nice with evil-mode](https://github.com/magnars/multiple-cursors.el/issues/17).
 
-So I hacked this plugin together to integrate `iedit-mode` into evil-mode. It takes
-after [vim-multiedit], offers an approach to multiple cursors like Sublime Text (or
-Atom) have, and compliments evil's in-built column and line-wise editing operations.
+So I hacked this plugin together to integrate `iedit-mode` into evil-mode. It
+takes after [vim-multiedit], offers an approach to multiple cursors like Sublime
+Text (or Atom) have, and compliments evil's in-built column and line-wise
+editing operations.
 
-![evil-multiedit](/../screenshots/main.gif?raw=true)
+![evil-multiedit](../screenshots/main.gif?raw=true)
 
 ## Installation
 
@@ -114,17 +115,20 @@ Use `(evil-ex-define-cmd "ie[dit]" 'evil-multiedit-ex-match)` so you can use
 
 ### Options
 
-* `evil-multiedit-dwim-motion-keys` (default: `t`): Whether or not to modify evil's motion
-  keys to act differently when the cursor is inside multiedit regions. Must be set before
-  evil-multiedit is loaded.
-* `evil-multiedit-ignore-indent-and-trailing` (default: `t`): When you match forward
-  whitespace and this is non-nil, leading and trailing whitespace will be ignored.
-* `evil-multiedit-thing-at-point-fn` (default `(lambda () (bounds-of-thing-at-point
-  'word))`): This function dictates what to grab from under the cursor if evil-multiedit
-  is invoked from normal mode. It takes no parameters and returns a cons cell (beg . end)
-  containing the bounds of the region to mark.
-* `evil-multiedit-smart-match-boundaries` (default `t`): If non-nil, multiedit will try to
-  be smart about match boundaries when invoked from normal mode. E.g.
+* `evil-multiedit-dwim-motion-keys` (default: `t`): Whether or not evil's motion
+  keys should act differently when the cursor is inside multiedit regions. Must
+  be set before evil-multiedit is loaded.
+* `evil-multiedit-ignore-indent-and-trailing` (default: `t`): When you match
+  forward whitespace and this is non-nil, leading and trailing whitespace will
+  be ignored.
+* `evil-multiedit-thing-at-point-fn` (default `(lambda ()
+  (bounds-of-thing-at-point 'word))`): This function dictates what to grab from
+  under the cursor if evil-multiedit is invoked from normal mode. It takes no
+  parameters and returns a cons cell (beg . end) containing the bounds of the
+  region to mark.
+* `evil-multiedit-smart-match-boundaries` (default `t`): If non-nil, multiedit
+  will try to be smart about match boundaries when invoked from normal mode.
+  E.g.
   + 'evil-multiedit-match' will not match 'evil-multiedit-match-all'
   + 'i' will only match 'i' and not every individual i in 'ignition'.
 
