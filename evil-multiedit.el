@@ -287,8 +287,6 @@ the boundary for matches. If BANG, invert `evil-multiedit-smart-match-boundaries
 (defun evil-multiedit--match-bounds ()
   (cond ((evil-visual-state-p)
          (cons evil-visual-beginning evil-visual-end))
-        ((looking-at-p "[^a-zA-Z0-9]")
-         (cons (point) (1+ (point))))
         (t
          (funcall evil-multiedit-thing-at-point-fn))))
 
