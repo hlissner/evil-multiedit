@@ -94,10 +94,10 @@ is invoked from normal mode. It takes no parameters and returns a cons cell (beg
   :type 'function)
 
 (defcustom evil-multiedit-smart-match-boundaries t
-  "If non-nil, multiedit will try to be smart about matches when invoked from
-normal mode. E.g. 'evil-multiedit-match' will not match
-'evil-multiedit-match-all', or 'i' will only match 'i' and not every individual
-i in, say, 'ignition'.
+  "If non-nil, multiedit tries to make sure match boundaries match on successive
+matches when invoked from normal mode. E.g. 'evil-multiedit-match' will not
+match 'evil-multiedit-match-all', or 'i' will only match 'i' and not every
+individual i in, say, 'ignition'.
 
 If evil-multiedit is invoked from visual mode, this is ignored."
   :group 'evil-multiedit
@@ -302,10 +302,10 @@ selected area is the boundary for matches. If BANG, invert
                  (not sym-p))
         (when (and (goto-char (1- obeg))
                    (looking-at "[^a-zA-Z0-9]"))
-          (setq occurrence (concat "\\<" occurrence)))
+          (setq occurrence (concat "\\_<" occurrence)))
         (when (and (goto-char oend)
                    (looking-at "[^a-zA-Z0-9]"))
-          (setq occurrence (concat occurrence "\\>"))))
+          (setq occurrence (concat occurrence "\\_>"))))
       (evil-multiedit--start-regexp occurrence (or beg obeg) (or end oend)))))
 
 (defun evil-multiedit--start-regexp (regexp &optional beg end)
