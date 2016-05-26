@@ -131,8 +131,11 @@ Use `(evil-ex-define-cmd "ie[dit]" 'evil-multiedit-ex-match)` so you can use
   E.g.
   + 'evil-multiedit-match' will not match 'evil-multiedit-match-all'
   + 'i' will only match 'i' and not every individual i in 'ignition'.
-
-  **NOTE:** If evil-multiedit is invoked from visual mode, this is ignored.
+  * **NOTE:** If evil-multiedit is invoked from visual mode, this is ignored.
+* `evil-multiedit-store-in-search-history` (default `nil`): If non-nil,
+  highlighted occurrences are stored in `regexp-search-ring`, so that after
+  exiting iedit `evil-search-next` and `evil-search-previous` (usually n and N)
+  use the last occurrence as if it were the last string in the search history.
 
 
 [evil-mode]: https://bitbucket.org/lyro/evil/wiki/Home
