@@ -68,45 +68,46 @@
 (require 'cl-lib)
 
 (defgroup evil-multiedit nil
-  ""
+  "Multiple cursors for `evil-mode' using iedit."
   :prefix "evil-multiedit-"
   :group 'evil)
 
 (defcustom evil-multiedit-dwim-motion-keys t
-  "Whether or not to modify evil's motion keys to act differently when the cursor is
-  inside multiedit regions. Must be set before evil-multiedit is loaded."
+  "Whether or not to modify evil's motion keys to act differently when the
+cursor is inside multiedit regions. Must be set before evil-multiedit is
+loaded."
   :group 'evil-multiedit
   :type 'boolean)
 
 (defcustom evil-multiedit-ignore-indent-and-trailing t
-  "When you match forward whitespace and this is non-nil, leading and trailing whitespace
-will be ignored."
+  "When you match forward whitespace and this is non-nil, leading and trailing
+whitespace will be ignored."
   :group 'evil-multiedit
   :type 'boolean)
 
 (defcustom evil-multiedit-thing-at-point-fn
   (lambda () (bounds-of-thing-at-point 'word))
-  "This function dictates what to grab from under the cursor if evil-multiedit is invoked
-from normal mode. It takes no parameters and returns a cons cell (beg . end) containing
-the bounds of the region to mark."
+  "This function dictates what to grab from under the cursor if evil-multiedit
+is invoked from normal mode. It takes no parameters and returns a cons cell (beg
+. end) containing the bounds of the region to mark."
   :group 'evil-multiedit
   :type 'function)
 
 (defcustom evil-multiedit-smart-match-boundaries t
-  "If non-nil, multiedit will try to be smart about matches when invoked from normal mode.
-E.g. 'evil-multiedit-match' will not match 'evil-multiedit-match-all', or 'i' will only
-match 'i' and not every individual i in, say, 'ignition'.
+  "If non-nil, multiedit will try to be smart about matches when invoked from
+normal mode. E.g. 'evil-multiedit-match' will not match
+'evil-multiedit-match-all', or 'i' will only match 'i' and not every individual
+i in, say, 'ignition'.
 
 If evil-multiedit is invoked from visual mode, this is ignored."
   :group 'evil-multiedit
   :type 'boolean)
 
 (defcustom evil-multiedit-store-in-search-history nil
-  "If non-nil, highlighted occurrences are stored in
-`regexp-search-ring', so that after exiting iedit
-`evil-search-next' and `evil-search-previous' (usually n and N)
-use the last occurrence as if it were the last string in the
-search history."
+  "If non-nil, highlighted occurrences are stored in `regexp-search-ring', so
+that after exiting iedit `evil-search-next' and `evil-search-previous' (usually
+n and N) use the last occurrence as if it were the last string in the search
+history."
   :group 'evil-multiedit
   :type 'boolean)
 
@@ -138,8 +139,8 @@ search history."
 
 ;;;###autoload
 (defun evil-multiedit-match-all ()
-  "Highlight all matches of the current selection (or symbol under pointer) as multiedit
-regions."
+  "Highlight all matches of the current selection (or symbol under pointer) as
+multiedit regions."
   (interactive)
   (if (fboundp 'ahs-clear) (ahs-clear))
   (let* ((bounds (evil-multiedit--match-bounds))
@@ -151,31 +152,32 @@ regions."
 
 ;;;###autoload (autoload 'evil-multiedit-match-symbol-and-next "evil-multiedit" nil t)
 (evil-define-command evil-multiedit-match-symbol-and-next (&optional count)
-  "Same as `evil-multiedit-match-and-next' if invoked from visual mode. From normal mode,
-it grabs whole symbols rather than words."
+  "Same as `evil-multiedit-match-and-next' if invoked from visual mode. From
+normal mode, it grabs whole symbols rather than words."
   (interactive "<c>")
   (let ((evil-multiedit-thing-at-point-fn (lambda () (bounds-of-thing-at-point 'symbol))))
     (evil-multiedit-match-and-next count)))
 
 ;;;###autoload (autoload 'evil-multiedit-match-symbol-and-prev "evil-multiedit" nil t)
 (evil-define-command evil-multiedit-match-symbol-and-prev (&optional count)
-  "Same as `evil-multiedit-match-and-prev' if invoked from visual mode. From normal mode,
-it grabs whole symbols rather than words."
+  "Same as `evil-multiedit-match-and-prev' if invoked from visual mode. From
+normal mode, it grabs whole symbols rather than words."
   (interactive "<c>")
   (evil-multiedit-match-symbol-and-next (or (and count (* -1 count)) -1)))
 
 ;;;###autoload (autoload 'evil-multiedit-match-and-next "evil-multiedit" nil t)
 (evil-define-command evil-multiedit-match-and-next (&optional count)
-  "Marks the word at point (or, if in visual mode, the selection), then marking the next
-matches on consecutive runs of this function.
+  "Marks the word at point (or, if in visual mode, the selection), then marking
+the next matches on consecutive runs of this function.
 
-Note: the matching behavior differs depending on if it was invoked from normal or visual mode.
+Note: the matching behavior differs depending on if it was invoked from normal
+or visual mode.
 
-  + From normal mode: `evil-multiedit-thing-at-point-fn' is used to grab the match under
-    the cursor. Also: only whole word matches will be selected (see
+  + From normal mode: `evil-multiedit-thing-at-point-fn' is used to grab the
+    match under the cursor. Also: only whole word matches will be selected (see
     `evil-multiedit-smart-match-boundaries').
-  + From visual mode, `evil-multiedit-smart-match-boundaries' is ignored, allowing for in-word
-    matches."
+  + From visual mode, `evil-multiedit-smart-match-boundaries' is ignored,
+    allowing for in-word matches."
   (interactive "<c>")
   (dotimes (i (or (and count (abs count)) 1))
     (let ((backwards-p (and count (< count 0)))
@@ -223,9 +225,9 @@ Note: the matching behavior differs depending on if it was invoked from normal o
 
 ;;;###autoload
 (defun evil-multiedit-toggle-or-restrict-region (&optional beg end)
-  "If in visual mode, restrict the multiedit regions to the selected region (i.e. disable
-all regions outside the selection). If in any other mode, toggle the multiedit region
-beneath the cursor, if one exists."
+  "If in visual mode, restrict the multiedit regions to the selected region
+(i.e. disable all regions outside the selection). If in any other mode, toggle
+the multiedit region beneath the cursor, if one exists."
   (interactive)
   (if (iedit-current-occurrence-string)
       (cond ((or (evil-visual-state-p)
@@ -268,8 +270,9 @@ beneath the cursor, if one exists."
 
 ;;;###autoload (autoload 'evil-multiedit-ex-match "evil-multiedit" nil t)
 (evil-define-command evil-multiedit-ex-match (&optional beg end bang regexp)
-  "Ex command for invoking evil-multiedit with a regular expression. The selected area is
-the boundary for matches. If BANG, invert `evil-multiedit-smart-match-boundaries'."
+  "Ex command for invoking evil-multiedit with a regular expression. The
+selected area is the boundary for matches. If BANG, invert
+`evil-multiedit-smart-match-boundaries'."
   (interactive "<r><!><a>")
   (evil-multiedit-abort)
   (let ((evil-multiedit-smart-match-boundaries
@@ -320,8 +323,8 @@ the boundary for matches. If BANG, invert `evil-multiedit-smart-match-boundaries
         evil-multiedit--pt-index (cons 1 1)))
 
 (defmacro evil-multiedit--switch-to-insert-state-after (command &optional interactive)
-  "Call COMMAND and switch to iedit-insert state.
-If INTERACTIVE is non-nil then COMMAND is called interactively."
+  "Call COMMAND and switch to iedit-insert state. If INTERACTIVE is non-nil then
+COMMAND is called interactively."
   `(progn
      (if ,interactive
          (call-interactively ',command)
@@ -355,16 +358,16 @@ If INTERACTIVE is non-nil then COMMAND is called interactively."
   (evil-multiedit--goto-overlay-end))
 
 (defun evil-multiedit--append-line ()
-  "Put the point at then end of current overlay and switch to
-`iedit-insert state'."
+  "Put the point at then end of current overlay and switch to iedit-insert
+state."
   (interactive)
   (if (iedit-find-current-occurrence-overlay)
       (evil-multiedit--switch-to-insert-state-after evil-multiedit--goto-overlay-end)
     (evil-multiedit--switch-to-insert-state-after evil-append-line t)))
 
 (defun evil-multiedit--insert-line ()
-  "Put the point at then end of current overlay and switch to
-`iedit-insert state'."
+  "Put the point at then end of current overlay and switch to iedit-insert
+state."
   (interactive)
   (evil-multiedit--switch-to-insert-state-after
    evil-multiedit--goto-overlay-start))
