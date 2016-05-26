@@ -15,17 +15,17 @@
   :tags '(evil-multiedit)
   (with! "The qu|ick brown fox was as quick as quick can be"
     (should (= 1 (evil-multiedit-match-and-prev)))
-    (should (string= iedit-initial-string-local "\\<quick\\>"))
+    (should (string= iedit-initial-string-local "\\_<quick\\_>"))
     (should-error (evil-multiedit-match-and-prev)))
   (with! "The quick brown fox was as qu|ick as quick can be"
     (should (= 1 (evil-multiedit-match-and-next)))
-    (should (string= iedit-initial-string-local "\\<quick\\>"))
+    (should (string= iedit-initial-string-local "\\_<quick\\_>"))
     (should (= 2 (evil-multiedit-match-and-next)))
     (should (= 3 (evil-multiedit-match-and-prev)))
-    (should (string= iedit-initial-string-local "\\<quick\\>"))
+    (should (string= iedit-initial-string-local "\\_<quick\\_>"))
     (should-error (evil-multiedit-match-and-next))
     (should-error (evil-multiedit-match-and-prev))
-    (should (string= iedit-initial-string-local "\\<quick\\>"))))
+    (should (string= iedit-initial-string-local "\\_<quick\\_>"))))
 
 (ert-deftest evil-multiedit-incremental-visual-match-backward-test ()
   :tags '(evil-multiedit)
