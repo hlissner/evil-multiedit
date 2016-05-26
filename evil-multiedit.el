@@ -86,7 +86,7 @@ whitespace will be ignored."
   :type 'boolean)
 
 (defcustom evil-multiedit-thing-at-point-fn
-  (lambda () (bounds-of-thing-at-point 'word))
+  (lambda () (bounds-of-thing-at-point 'symbol))
   "This function dictates what to grab from under the cursor if evil-multiedit
 is invoked from normal mode. It takes no parameters and returns a cons cell (beg
 . end) containing the bounds of the region to mark."
