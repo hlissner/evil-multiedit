@@ -101,6 +101,15 @@ If evil-multiedit is invoked from visual mode, this is ignored."
   :group 'evil-multiedit
   :type 'boolean)
 
+(defcustom evil-multiedit-store-in-search-history nil
+  "If non-nil, highlighted occurrences are stored in
+`regexp-search-ring', so that after exiting iedit
+`evil-search-next' and `evil-search-previous' (usually n and N)
+use the last occurrence as if it were the last string in the
+search history."
+  :group 'evil-multiedit
+  :type 'boolean)
+
 (defvar evil-multiedit--pt-end nil "The end of the first match")
 (defvar evil-multiedit--pt-beg nil "The beginning of the first region")
 (defvar evil-multiedit--pt-index (cons 1 1) "The forward/backward search indices")
@@ -300,6 +309,8 @@ the boundary for matches. If BANG, invert `evil-multiedit-smart-match-boundaries
 
 (defun evil-multiedit--start-regexp (regexp &optional beg end)
   (setq iedit-initial-string-local regexp)
+  (when evil-multiedit-store-in-search-history
+    (isearch-update-ring regexp t))
   (iedit-start regexp beg end)
   (evil-multiedit-state)
   regexp)
