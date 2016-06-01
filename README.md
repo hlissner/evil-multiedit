@@ -62,7 +62,7 @@ Evil-multiedit does not automatically bind any keys. Call
 (define-key evil-multiedit-state-map (kbd "RET") 'evil-multiedit-toggle-or-restrict-region)
 
 ;; ...and in visual mode, RET will disable all fields outside the selected region
-(define-key evil-visual-state-map (kbd "RET") 'evil-multiedit-toggle-or-restrict-region)
+(define-key evil-motion-state-map (kbd "RET") 'evil-multiedit-toggle-or-restrict-region)
 
 ;; For moving between edit regions
 (define-key evil-multiedit-state-map (kbd "C-n") 'evil-multiedit-next)
