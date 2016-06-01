@@ -229,7 +229,7 @@ or visual mode.
 (i.e. disable all regions outside the selection). If in any other mode, toggle
 the multiedit region beneath the cursor, if one exists."
   (interactive)
-  (if (iedit-current-occurrence-string)
+  (if (and iedit-mode (iedit-current-occurrence-string))
       (cond ((or (evil-visual-state-p)
                  (and beg end))
              (let ((current-prefix-arg '(4))
@@ -239,8 +239,7 @@ the multiedit region beneath the cursor, if one exists."
                (call-interactively 'iedit-mode)
                (save-excursion (iedit-restrict-region beg end))
                (evil-previous-line)))
-            (t
-             (iedit-toggle-selection)))
+            (t (iedit-toggle-selection)))
     (call-interactively 'evil-ret)))
 
 ;;;###autoload
