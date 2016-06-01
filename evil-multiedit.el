@@ -190,22 +190,20 @@ the next matches on consecutive runs of this function.
 Note: the matching behavior differs depending on if it was invoked from normal
 or visual mode.
 
-  + From normal mode: `evil-multiedit-thing-at-point-fn' is used to grab the
-    match under the cursor. Also: only whole word matches will be selected (see
-    `evil-multiedit-smart-match-boundaries').
-  + From visual mode, `evil-multiedit-smart-match-boundaries' is ignored,
-    allowing for in-word matches."
+  + From normal mode: `evil-multiedit-use-symbols' determines how to grab the
+    match under the cursor.
+  + From visual mode, word and symbol boundaries are ignored, allowing for
+    in-word matches."
   (interactive "<c>")
   (dotimes (i (or (and count (abs count)) 1))
-    (let ((backwards-p (and count (< count 0)))
-          (evil-multiedit-smart-match-boundaries (not (evil-visual-state-p))))
+    (let ((backwards-p (and count (< count 0))))
       (setq evil-ex-search-direction (if backwards-p 'backward 'forward))
       (unless (iedit-find-current-occurrence-overlay)
         (evil-multiedit-abort t))
       (if evil-multiedit--pt-beg
           (save-excursion
             (let ((j (if backwards-p (cdr evil-multiedit--pt-index) (car evil-multiedit--pt-index)))
-                  (is-whitespace (string-match-p "^[ \t]+$" iedit-initial-string-local)))
+                  (is-whitespace (string-match-p "\\`\\s-+\\'" iedit-initial-string-local)))
               (goto-char (if backwards-p evil-multiedit--pt-beg evil-multiedit--pt-end))
               (while (and (> j 0)
                           (setq pt (evil-ex-find-next nil (if backwards-p 'backward 'forward) t)))
@@ -221,15 +219,15 @@ or visual mode.
                              (cdr evil-multiedit--pt-index)
                            (car evil-multiedit--pt-index)))
                 (message "Added match (out of %s)" (length iedit-occurrences-overlays)))))
-        (let* ((bounds (evil-multiedit--get-occurrence))
-               (beg (nth 1 bounds))
-               (end (nth 2 bounds))
-               occurrence)
+        (let* ((occurrence-info (evil-multiedit--get-occurrence))
+               (occurrence (car occurrence-info))
+               (beg (nth 1 occurrence-info))
+               (end (nth 2 occurrence-info)))
           (setq evil-multiedit--pt-beg beg
                 evil-multiedit--pt-end end)
           (evil-normal-state)
           (save-excursion
-            (setq occurrence (evil-multiedit--start beg end))
+            (evil-multiedit--start-regexp occurrence beg end)
             (setq evil-ex-search-pattern (evil-ex-make-search-pattern occurrence))
             (evil-ex-find-next nil nil t))))))
   (length iedit-occurrences-overlays))
