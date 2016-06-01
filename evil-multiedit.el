@@ -79,6 +79,20 @@ loaded."
   :group 'evil-multiedit
   :type 'boolean)
 
+(defcustom evil-multiedit-match-whitespace t
+  "If non-nil allow matching against whitespace characters, where
+whitespace is defined by the active major-mode's syntax
+table."
+  :group 'evil-multiedit
+  :type 'boolean)
+
+(defcustom evil-multiedit-match-punctuation t
+  "If non-nil allow matching against punctuation characters,
+where punctuation is defined by the active major-mode's syntax
+table."
+  :group 'evil-multiedit
+  :type 'boolean)
+
 (defcustom evil-multiedit-ignore-indent-and-trailing t
   "When you match forward whitespace and this is non-nil, leading and trailing
 whitespace will be ignored."
@@ -285,12 +299,18 @@ selected area is the boundary for matches. If BANG, invert
         (evil-multiedit-toggle-or-restrict-region beg end)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (defun evil-multiedit--match-bounds ()
-  (cond ((evil-visual-state-p)
-         (cons evil-visual-beginning evil-visual-end))
-        (t
-         (funcall evil-multiedit-thing-at-point-fn))))
+  (save-match-data
+    (cond ((evil-visual-state-p)
+           (cons evil-visual-beginning evil-visual-end))
+          ((and evil-multiedit-match-whitespace
+                (looking-at "\\s-+"))
+           (cons (match-beginning 0) (match-end 0)))
+          ((and evil-multiedit-match-punctuation
+                (looking-at "\\s.+"))
+           (cons (match-beginning 0) (match-end 0)))
+          ((consp (funcall evil-multiedit-thing-at-point-fn))
+           (funcall evil-multiedit-thing-at-point-fn)))))
 
 (defun evil-multiedit--start (obeg oend &optional beg end)
   (let* ((occurrence (buffer-substring-no-properties obeg oend))
