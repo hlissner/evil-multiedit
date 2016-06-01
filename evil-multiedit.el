@@ -105,13 +105,13 @@ normal mode. If this is nil, words are used instead."
   :group 'evil-multiedit
   :type 'boolean)
 
-(defcustom evil-multiedit-thing-at-point-fn
-  (lambda () (bounds-of-thing-at-point 'symbol))
-  "This function dictates what to grab from under the cursor if evil-multiedit
-is invoked from normal mode. It takes no parameters and returns a cons cell (beg
-. end) containing the bounds of the region to mark."
-  :group 'evil-multiedit
-  :type 'function)
+;; (defcustom evil-multiedit-thing-at-point-fn
+;;   (lambda () (bounds-of-thing-at-point 'symbol))
+;;   "This function dictates what to grab from under the cursor if evil-multiedit
+;; is invoked from normal mode. It takes no parameters and returns a cons cell (beg
+;; . end) containing the bounds of the region to mark."
+;;   :group 'evil-multiedit
+;;   :type 'function)
 
 (defcustom evil-multiedit-smart-match-boundaries t
   "If non-nil, multiedit tries to make sure match boundaries match on successive
@@ -172,7 +172,7 @@ multiedit regions."
   "Same as `evil-multiedit-match-and-next' if invoked from visual mode. From
 normal mode, it grabs whole symbols rather than words."
   (interactive "<c>")
-  (let ((evil-multiedit-thing-at-point-fn (lambda () (bounds-of-thing-at-point 'symbol))))
+  (let ((evil-multiedit-use-symbols t))
     (evil-multiedit-match-and-next count)))
 
 ;;;###autoload (autoload 'evil-multiedit-match-symbol-and-prev "evil-multiedit" nil t)
