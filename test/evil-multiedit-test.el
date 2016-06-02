@@ -39,3 +39,15 @@
     (should (string= iedit-initial-string-local "quick brown"))
     (should (= 2 (evil-multiedit-match-and-next)))))
 
+(ert-deftest evil-multiedit-scope-test ()
+  :tags '(evil-multiedit)
+  (let ((evil-multiedit-scope 'line))
+    (with! "The q|uick\n brown fox\n was as\n quick as\n quick brown foxes\n can be"
+      (should (= 1 (evil-multiedit-match-symbol-and-next)))
+      (should (string= iedit-initial-string-local "\\_<quick\\_>"))
+      (should-error (evil-multiedit-match-symbol-and-next)))
+
+    (with! "The quick\n brown fox\n was as\n quick as\n quick b|rown foxes\n can be"
+      (should (= 1 (evil-multiedit-match-symbol-and-prev)))
+      (should (string= iedit-initial-string-local "\\_<brown\\_>"))
+      (should-error (evil-multiedit-match-symbol-and-next)))))
