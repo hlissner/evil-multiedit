@@ -475,9 +475,9 @@ state."
 (defun evil-multiedit-default-keybinds ()
   "Sets up the default keybindings for `evil-multiedit'."
   (define-key evil-visual-state-map "R" 'evil-multiedit-match-all)
-  (define-key evil-normal-state-map (kbd "M-d") 'evil-multiedit-match-and-next)
+  (define-key evil-normal-state-map (kbd "M-d") 'evil-multiedit-match-symbol-and-next)
   (define-key evil-visual-state-map (kbd "M-d") 'evil-multiedit-match-and-next)
-  (define-key evil-normal-state-map (kbd "M-D") 'evil-multiedit-match-and-prev)
+  (define-key evil-normal-state-map (kbd "M-D") 'evil-multiedit-match-symbol-and-prev)
   (define-key evil-visual-state-map (kbd "M-D") 'evil-multiedit-match-and-prev)
   (define-key evil-visual-state-map (kbd "C-M-D") 'evil-multiedit-restore)
   (define-key evil-motion-state-map (kbd "RET") 'evil-multiedit-toggle-or-restrict-region)
