@@ -105,14 +105,6 @@ normal mode. If this is nil, words are used instead."
   :group 'evil-multiedit
   :type 'boolean)
 
-;; (defcustom evil-multiedit-thing-at-point-fn
-;;   (lambda () (bounds-of-thing-at-point 'symbol))
-;;   "This function dictates what to grab from under the cursor if evil-multiedit
-;; is invoked from normal mode. It takes no parameters and returns a cons cell (beg
-;; . end) containing the bounds of the region to mark."
-;;   :group 'evil-multiedit
-;;   :type 'function)
-
 (defcustom evil-multiedit-smart-match-boundaries t
   "If non-nil, multiedit tries to make sure match boundaries match on successive
 matches when invoked from normal mode. E.g. 'evil-multiedit-match' will not
