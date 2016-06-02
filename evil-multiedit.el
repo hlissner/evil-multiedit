@@ -79,19 +79,39 @@ loaded."
   :group 'evil-multiedit
   :type 'boolean)
 
+(defcustom evil-multiedit-match-whitespace t
+  "If non-nil allow matching against whitespace characters, where
+whitespace is defined by the active major-mode's syntax
+table."
+  :group 'evil-multiedit
+  :type 'boolean)
+
+(defcustom evil-multiedit-match-punctuation t
+  "If non-nil allow matching against punctuation characters,
+where punctuation is defined by the active major-mode's syntax
+table."
+  :group 'evil-multiedit
+  :type 'boolean)
+
 (defcustom evil-multiedit-ignore-indent-and-trailing t
   "When you match forward whitespace and this is non-nil, leading and trailing
 whitespace will be ignored."
   :group 'evil-multiedit
   :type 'boolean)
 
-(defcustom evil-multiedit-thing-at-point-fn
-  (lambda () (bounds-of-thing-at-point 'symbol))
-  "This function dictates what to grab from under the cursor if evil-multiedit
-is invoked from normal mode. It takes no parameters and returns a cons cell (beg
-. end) containing the bounds of the region to mark."
+(defcustom evil-multiedit-use-symbols evil-symbol-word-search
+  "Grab the symbol under cursor if evil-multiedit is invoked from
+normal mode. If this is nil, words are used instead."
   :group 'evil-multiedit
-  :type 'function)
+  :type 'boolean)
+
+;; (defcustom evil-multiedit-thing-at-point-fn
+;;   (lambda () (bounds-of-thing-at-point 'symbol))
+;;   "This function dictates what to grab from under the cursor if evil-multiedit
+;; is invoked from normal mode. It takes no parameters and returns a cons cell (beg
+;; . end) containing the bounds of the region to mark."
+;;   :group 'evil-multiedit
+;;   :type 'function)
 
 (defcustom evil-multiedit-smart-match-boundaries t
   "If non-nil, multiedit tries to make sure match boundaries match on successive
@@ -143,19 +163,16 @@ history."
 multiedit regions."
   (interactive)
   (if (fboundp 'ahs-clear) (ahs-clear))
-  (let* ((bounds (evil-multiedit--match-bounds))
-         (beg (car bounds))
-         (end (cdr bounds))
-         evil-multiedit-smart-match-boundaries)
-    (setq evil-multiedit--dont-recall t)
-    (evil-multiedit--start beg end (point-min) (point-max))))
+  (setq evil-multiedit--dont-recall t)
+  (evil-multiedit--start-regexp (car (evil-multiedit--get-occurrence))
+                                (point-min) (point-max)))
 
 ;;;###autoload (autoload 'evil-multiedit-match-symbol-and-next "evil-multiedit" nil t)
 (evil-define-command evil-multiedit-match-symbol-and-next (&optional count)
   "Same as `evil-multiedit-match-and-next' if invoked from visual mode. From
 normal mode, it grabs whole symbols rather than words."
   (interactive "<c>")
-  (let ((evil-multiedit-thing-at-point-fn (lambda () (bounds-of-thing-at-point 'symbol))))
+  (let ((evil-multiedit-use-symbols t))
     (evil-multiedit-match-and-next count)))
 
 ;;;###autoload (autoload 'evil-multiedit-match-symbol-and-prev "evil-multiedit" nil t)
@@ -173,22 +190,20 @@ the next matches on consecutive runs of this function.
 Note: the matching behavior differs depending on if it was invoked from normal
 or visual mode.
 
-  + From normal mode: `evil-multiedit-thing-at-point-fn' is used to grab the
-    match under the cursor. Also: only whole word matches will be selected (see
-    `evil-multiedit-smart-match-boundaries').
-  + From visual mode, `evil-multiedit-smart-match-boundaries' is ignored,
-    allowing for in-word matches."
+  + From normal mode: `evil-multiedit-use-symbols' determines how to grab the
+    match under the cursor.
+  + From visual mode, word and symbol boundaries are ignored, allowing for
+    in-word matches."
   (interactive "<c>")
   (dotimes (i (or (and count (abs count)) 1))
-    (let ((backwards-p (and count (< count 0)))
-          (evil-multiedit-smart-match-boundaries (not (evil-visual-state-p))))
+    (let ((backwards-p (and count (< count 0))))
       (setq evil-ex-search-direction (if backwards-p 'backward 'forward))
       (unless (iedit-find-current-occurrence-overlay)
         (evil-multiedit-abort t))
       (if evil-multiedit--pt-beg
           (save-excursion
             (let ((j (if backwards-p (cdr evil-multiedit--pt-index) (car evil-multiedit--pt-index)))
-                  (is-whitespace (string-match-p "^[ \t]+$" iedit-initial-string-local)))
+                  (is-whitespace (string-match-p "\\`\\s-+\\'" iedit-initial-string-local)))
               (goto-char (if backwards-p evil-multiedit--pt-beg evil-multiedit--pt-end))
               (while (and (> j 0)
                           (setq pt (evil-ex-find-next nil (if backwards-p 'backward 'forward) t)))
@@ -204,15 +219,15 @@ or visual mode.
                              (cdr evil-multiedit--pt-index)
                            (car evil-multiedit--pt-index)))
                 (message "Added match (out of %s)" (length iedit-occurrences-overlays)))))
-        (let* ((bounds (evil-multiedit--match-bounds))
-               (beg (car bounds))
-               (end (cdr bounds))
-               occurrence)
+        (let* ((occurrence-info (evil-multiedit--get-occurrence))
+               (occurrence (car occurrence-info))
+               (beg (nth 1 occurrence-info))
+               (end (nth 2 occurrence-info)))
           (setq evil-multiedit--pt-beg beg
                 evil-multiedit--pt-end end)
           (evil-normal-state)
           (save-excursion
-            (setq occurrence (evil-multiedit--start beg end))
+            (evil-multiedit--start-regexp occurrence beg end)
             (setq evil-ex-search-pattern (evil-ex-make-search-pattern occurrence))
             (evil-ex-find-next nil nil t))))))
   (length iedit-occurrences-overlays))
@@ -285,12 +300,33 @@ selected area is the boundary for matches. If BANG, invert
         (evil-multiedit-toggle-or-restrict-region beg end)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defun evil-multiedit--match-bounds ()
-  (cond ((evil-visual-state-p)
-         (cons evil-visual-beginning evil-visual-end))
-        (t
-         (funcall evil-multiedit-thing-at-point-fn))))
+(defun evil-multiedit--get-occurrence ()
+  (save-match-data
+    (let (regexp bounds)
+      (cond ((evil-visual-state-p)
+             (setq regexp
+                   (regexp-quote (buffer-substring-no-properties
+                                  evil-visual-beginning evil-visual-end)))
+             (setq bounds (cons evil-visual-beginning evil-visual-end)))
+            ((or (and evil-multiedit-match-whitespace
+                      (looking-at "\\s-+"))
+                 (and evil-multiedit-match-punctuation
+                      (looking-at "\\s.+")))
+             (setq regexp (regexp-quote
+                           (match-string-no-properties 0)))
+             (setq bounds (cons (match-beginning 0) (match-end 0))))
+            ((and evil-multiedit-use-symbols
+                  (bounds-of-thing-at-point 'symbol))
+             (setq regexp
+                   (format "\\_<%s\\_>"
+                           (regexp-quote (thing-at-point 'symbol t))))
+             (setq bounds (bounds-of-thing-at-point 'symbol)))
+            ((bounds-of-thing-at-point 'word)
+             (setq regexp
+                   (format "\\_<%s\\_>"
+                           (regexp-quote (thing-at-point 'word t))))
+             (setq bounds (bounds-of-thing-at-point 'word))))
+      (list regexp (car bounds) (cdr bounds)))))
 
 (defun evil-multiedit--start (obeg oend &optional beg end)
   (let* ((occurrence (buffer-substring-no-properties obeg oend))
