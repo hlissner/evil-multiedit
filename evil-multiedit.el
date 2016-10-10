@@ -131,6 +131,13 @@ or anything that `bounds-of-thing-at-point' accept, such as 'defun, 'sexp or
   :type 'symbol)
 (make-variable-buffer-local 'evil-multiedit-scope)
 
+(defcustom evil-multiedit-follow-matches t
+  "If non-nil, cursor will jump to each new match on
+`evil-multiedit-match-and-next' and `evil-multiedit-match-and-prev' (and its
+symbol variants)."
+  :group 'evil-multiedit
+  :type 'boolean)
+
 (defvar evil-multiedit--pt-end nil "The end of the first match")
 (defvar evil-multiedit--pt-beg nil "The beginning of the first region")
 (defvar evil-multiedit--pt-index (cons 1 1) "The forward/backward search indices")
@@ -186,8 +193,9 @@ normal mode, it grabs whole symbols rather than words."
 
 ;;;###autoload (autoload 'evil-multiedit-match-and-next "evil-multiedit" nil t)
 (evil-define-command evil-multiedit-match-and-next (&optional count)
-  "Marks the word at point (or, if in visual mode, the selection), then marking
-the next matches on consecutive runs of this function.
+  "Marks the word at point (or, if in visual mode, the selection), then marks
+the next matches on consecutive runs of this function. Jumps to next region if
+`evil-multiedit-follow-matches' is non-nil.
 
 Note: the matching behavior differs depending on if it was invoked from normal
 or visual mode.
@@ -196,48 +204,54 @@ or visual mode.
     match under the cursor.
   + From visual mode, word and symbol boundaries are ignored, allowing for
     in-word matches."
-  :jump t
   (interactive "<c>")
-  (dotimes (i (or (and count (abs count)) 1))
-    (let ((backwards-p (and count (< count 0)))
-          (scope (evil-multiedit--scope)))
-      (setq evil-ex-search-direction (if backwards-p 'backward 'forward))
-      (unless (iedit-find-current-occurrence-overlay)
-        (evil-multiedit-abort t))
-      (if evil-multiedit--pt-beg
-          (save-excursion
-            (let ((j (if backwards-p (cdr evil-multiedit--pt-index) (car evil-multiedit--pt-index)))
-                  (is-whitespace (string-match-p "\\`\\s-+\\'" iedit-initial-string-local))
-                  pt in-scope)
-              (goto-char (if backwards-p evil-multiedit--pt-beg evil-multiedit--pt-end))
-              (while (and (> j 0)
-                          (setq pt (evil-ex-find-next nil (if backwards-p 'backward 'forward) t)))
-                (unless (and is-whitespace
-                             evil-multiedit-ignore-indent-and-trailing
-                             (< (point) (save-excursion (back-to-indentation) (point))))
-                  (cl-decf j)))
-              (if (or (<= (point) (car scope))
-                      (>= (point) (cdr scope)))
-                  (user-error "No more matches in %s scope!" evil-multiedit-scope)
-                (unless (iedit-find-current-occurrence-overlay)
-                  (iedit-toggle-selection))
-                (if (> j 0)
-                    (user-error "No more matches!")
-                  (cl-incf (if backwards-p
-                               (cdr evil-multiedit--pt-index)
-                             (car evil-multiedit--pt-index)))
-                  (message "Added match (out of %s)" (length iedit-occurrences-overlays))))))
+  (let ((forward-p (or (null count) (> count 0)))
+        (count (or (and count (abs count)) 1)))
+    (dotimes (i count)
+      (if iedit-mode
+          (let ((bounds (evil-multiedit--scope))
+                (origin (point))
+                (start (if forward-p evil-multiedit--pt-end evil-multiedit--pt-beg))
+                (whitespace-p (string-match-p "\\`\\s-+\\'" iedit-initial-string-local))
+                beg end)
+            (goto-char (+ start (if forward-p 1 -1)))
+            (unless (re-search-forward iedit-initial-string-local
+                                       (if forward-p (cdr bounds) (car bounds))
+                                       t (if forward-p 1 -1))
+              (goto-char origin)
+              (user-error "No more matches"))
+            ;; Skip leading and trailing whitespace, if possible
+            (while (and whitespace-p evil-multiedit-ignore-indent-and-trailing
+                        (or (<= (point) (save-excursion (back-to-indentation) (point)))
+                            (>  (point) (save-match-data (save-excursion (evil-last-non-blank) (point)))))
+                        (re-search-forward iedit-initial-string-local
+                                           (if forward-p (cdr bounds) (car bounds))
+                                           t (if forward-p 1 -1))))
+            (setq beg (match-beginning 0)
+                  end (match-end 0))
+            ;; Check for an overlay, if none exist, create one
+            (unless (or (iedit-find-overlay-at-point beg 'iedit-occurrence-overlay-name)
+                        (iedit-find-overlay-at-point end 'iedit-occurrence-overlay-name))
+              (push (iedit-make-occurrence-overlay beg end)
+                    iedit-occurrences-overlays))
+            ;; Remember for next time
+            (setq evil-multiedit--pt-beg (min beg evil-multiedit--pt-beg)
+                  evil-multiedit--pt-end (max end evil-multiedit--pt-end))
+            (goto-char (if evil-multiedit-follow-matches beg origin)))
         (let* ((occurrence-info (evil-multiedit--get-occurrence))
                (occurrence (car occurrence-info))
                (beg (nth 1 occurrence-info))
                (end (nth 2 occurrence-info)))
-          (setq evil-multiedit--pt-beg beg
-                evil-multiedit--pt-end end)
-          (evil-normal-state)
-          (save-excursion
-            (evil-multiedit--start-regexp occurrence beg end)
-            (setq evil-ex-search-pattern (evil-ex-make-search-pattern occurrence))
-            (evil-ex-find-next nil nil t))))))
+          (if (and beg end)
+              (progn
+                (setq evil-multiedit--pt-beg beg
+                      evil-multiedit--pt-end end)
+                (evil-normal-state)
+                (save-excursion
+                  (evil-multiedit--start-regexp occurrence beg end)
+                  (setq evil-ex-search-pattern (evil-ex-make-search-pattern occurrence))
+                  (evil-ex-find-next nil nil t)))
+            (user-error "Can't mark anything"))))))
   (length iedit-occurrences-overlays))
 
 ;;;###autoload (autoload 'evil-multiedit-match-and-prev "evil-multiedit" nil t)
@@ -249,11 +263,12 @@ or visual mode.
 
 ;;;###autoload
 (defun evil-multiedit-toggle-or-restrict-region (&optional beg end)
-  "If in visual mode, restrict the multiedit regions to the selected region
-(i.e. disable all regions outside the selection). If in any other mode, toggle
-the multiedit region beneath the cursor, if one exists."
+  "If in visual mode, restrict the multiedit regions to the selected region.
+i.e. disable all regions outside the selection. If in any other mode, toggle the
+multiedit region beneath the cursor, if one exists."
   (interactive)
   (if (and iedit-mode (iedit-current-occurrence-string))
+
       (cond ((or (evil-visual-state-p)
                  (and beg end))
              (let ((current-prefix-arg '(4))
@@ -314,7 +329,8 @@ selected area is the boundary for matches. If BANG, invert
   (if (eq evil-multiedit-scope 'visible)
       (cons (window-start) (window-end))
     (or (bounds-of-thing-at-point evil-multiedit-scope)
-        (and (null evil-multiedit-scope) (cons (point-min) (point-max)))
+        (and (null evil-multiedit-scope)
+             (bounds-of-thing-at-point 'buffer))
         (error "Invalid/empty scope (%s), check `evil-multiedit-scope'"
                evil-multiedit-scope))))
 
