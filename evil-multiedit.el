@@ -310,6 +310,7 @@ selected area is the boundary for matches. If BANG, invert
   (if (eq evil-multiedit-scope 'visible)
       (cons (window-start) (window-end))
     (or (bounds-of-thing-at-point evil-multiedit-scope)
+        (and (null evil-multiedit-scope) (cons (point-min) (point-max)))
         (error "Invalid/empty scope (%s), check `evil-multiedit-scope'"
                evil-multiedit-scope))))
 
