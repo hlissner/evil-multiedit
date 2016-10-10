@@ -51,3 +51,37 @@
       (should (= 1 (evil-multiedit-match-symbol-and-prev)))
       (should (string= iedit-initial-string-local "\\_<brown\\_>"))
       (should-error (evil-multiedit-match-symbol-and-next)))))
+
+(ert-deftest evil-multiedit-follow-test ()
+  :tags '(evil-multiedit)
+  (let ((evil-multiedit-follow-matches t))
+    (with! "The q|uick\n brown fox\n was as\n quick as\n quick brown foxes\n can be"
+      (should (= 1 (evil-multiedit-match-symbol-and-next)))
+      (let ((origin (point)))
+        (should (and (evil-multiedit-match-symbol-and-next)
+                     (evil-multiedit-match-symbol-and-next)
+                     (/= (point) origin)
+                     (looking-at-p "quick")))))
+
+    (with! "The quick\n brown fox\n was as\n quick as\n qu|ick brown foxes\n can be"
+      (should (= 1 (evil-multiedit-match-symbol-and-prev)))
+      (let ((origin (point)))
+        (should (and (evil-multiedit-match-symbol-and-prev)
+                     (evil-multiedit-match-symbol-and-prev)
+                     (/= (point) origin)
+                     (looking-at-p "quick"))))))
+
+  (let (evil-multiedit-follow-matches)
+    (with! "The q|uick\n brown fox\n was as\n quick as\n quick brown foxes\n can be"
+      (should (= 1 (evil-multiedit-match-symbol-and-next)))
+      (let ((origin (point)))
+        (should (and (evil-multiedit-match-symbol-and-next)
+                     (evil-multiedit-match-symbol-and-next)
+                     (= (point) origin)))))
+
+    (with! "The quick\n brown fox\n was as\n quick as\n qu|ick brown foxes\n can be"
+      (should (= 1 (evil-multiedit-match-symbol-and-prev)))
+      (let ((origin (point)))
+        (should (and (evil-multiedit-match-symbol-and-prev)
+                     (evil-multiedit-match-symbol-and-prev)
+                     (= (point) origin)))))))
