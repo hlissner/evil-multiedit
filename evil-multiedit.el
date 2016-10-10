@@ -171,6 +171,7 @@ multiedit regions."
 (evil-define-command evil-multiedit-match-symbol-and-next (&optional count)
   "Same as `evil-multiedit-match-and-next' if invoked from visual mode. From
 normal mode, it grabs whole symbols rather than words."
+  :jump t
   (interactive "<c>")
   (let ((evil-multiedit-use-symbols t))
     (evil-multiedit-match-and-next count)))
@@ -179,6 +180,7 @@ normal mode, it grabs whole symbols rather than words."
 (evil-define-command evil-multiedit-match-symbol-and-prev (&optional count)
   "Same as `evil-multiedit-match-and-prev' if invoked from visual mode. From
 normal mode, it grabs whole symbols rather than words."
+  :jump t
   (interactive "<c>")
   (evil-multiedit-match-symbol-and-next (or (and count (* -1 count)) -1)))
 
@@ -194,6 +196,7 @@ or visual mode.
     match under the cursor.
   + From visual mode, word and symbol boundaries are ignored, allowing for
     in-word matches."
+  :jump t
   (interactive "<c>")
   (dotimes (i (or (and count (abs count)) 1))
     (let ((backwards-p (and count (< count 0)))
@@ -240,6 +243,7 @@ or visual mode.
 ;;;###autoload (autoload 'evil-multiedit-match-and-prev "evil-multiedit" nil t)
 (evil-define-command evil-multiedit-match-and-prev (&optional count)
   "The backwards version of `evil-multiedit-match-and-next'"
+  :jump t
   (interactive "<c>")
   (evil-multiedit-match-and-next (or (and count (* -1 count)) -1)))
 
