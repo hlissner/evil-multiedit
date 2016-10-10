@@ -121,11 +121,11 @@ Use `(evil-ex-define-cmd "ie[dit]" 'evil-multiedit-ex-match)` so you can use
 * `evil-multiedit-ignore-indent-and-trailing` (default: `t`): When you match
   forward whitespace and this is non-nil, leading and trailing whitespace will
   be ignored.
-* `evil-multiedit-scope` (default `'visible`): How far evil-multiedit should
-  look for additional matches. Accepts 'visible, or anything that
-  `bounds-of-thing-at-point` accept, such as `'defun`, `'sexp` or `'email`. If
-  set to `'visible`, evil-multiedit will only search until the end of the
-  visible window.
+* `evil-multiedit-scope` (default `nil`): How far evil-multiedit should look for
+  incremental matches (doesn't affect `evil-multiedit-match-all` or
+  `evil-multiedit-ex-match`). Accepts 'visible, or anything that
+  `bounds-of-thing-at-point` accept, such as `'defun`, `'sexp` or `'email`. If `nil`,
+  evil-multiedit search the whole buffer.
 * `evil-multiedit-smart-match-boundaries` (default `t`): If non-nil, multiedit
   will try to be smart about match boundaries when invoked from normal mode.
   E.g.

@@ -123,11 +123,10 @@ history."
   :group 'evil-multiedit
   :type 'boolean)
 
-(defcustom evil-multiedit-scope 'visible
+(defcustom evil-multiedit-scope nil
   "How far evil-multiedit should look for additional matches. Accepts 'visible,
 or anything that `bounds-of-thing-at-point' accept, such as 'defun, 'sexp or
-'email. If set to 'visible (the default), evil-multiedit will only search until
-the end of the visible window."
+'email. If nil (the default), evil-multiedit will search the whole buffer."
   :group 'evil-multiedit
   :type 'symbol)
 (make-variable-buffer-local 'evil-multiedit-scope)
