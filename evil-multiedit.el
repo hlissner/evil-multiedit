@@ -131,7 +131,7 @@ or anything that `bounds-of-thing-at-point' accept, such as 'defun, 'sexp or
   :type 'symbol)
 (make-variable-buffer-local 'evil-multiedit-scope)
 
-(defcustom evil-multiedit-follow-matches t
+(defcustom evil-multiedit-follow-matches nil
   "If non-nil, cursor will jump to each new match on
 `evil-multiedit-match-and-next' and `evil-multiedit-match-and-prev' (and its
 symbol variants)."
