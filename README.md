@@ -136,6 +136,9 @@ Use `(evil-ex-define-cmd "ie[dit]" 'evil-multiedit-ex-match)` so you can use
   highlighted occurrences are stored in `regexp-search-ring`, so that after
   exiting iedit `evil-search-next` and `evil-search-previous` (usually n and N)
   use the last occurrence as if it were the last string in the search history.
+* `evil-multiedit-follow-matches` (default `nil`): If non-nil, the
+  cursor will jump to each additional match, rather than remain in its
+  original position.
 
 
 [evil-mode]: https://bitbucket.org/lyro/evil/wiki/Home
