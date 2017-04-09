@@ -138,6 +138,12 @@ symbol variants)."
   :group 'evil-multiedit
   :type 'boolean)
 
+(defcustom evil-multiedit-marker
+  (propertize "|" 'face '(:inverse-video t))
+  "The string to display in place of empty markers."
+  :group 'evil-multiedit
+  :type 'string)
+
 (defvar evil-multiedit--pt-end nil "The end of the first match")
 (defvar evil-multiedit--pt-beg nil "The beginning of the first region")
 (defvar evil-multiedit--pt-index (cons 1 1) "The forward/backward search indices")
@@ -145,6 +151,8 @@ symbol variants)."
 (defvar evil-multiedit--dont-recall nil)
 (defvar evil-multiedit--last-markers '() "List of markers from last multiedit.")
 (make-variable-buffer-local 'evil-multiedit--last-markers)
+
+(defvar evil-multiedit--marker nil)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -190,6 +198,36 @@ normal mode, it grabs whole symbols rather than words."
   :jump t
   (interactive "<c>")
   (evil-multiedit-match-symbol-and-next (or (and count (* -1 count)) -1)))
+
+;;;###autoload
+(defun evil-multiedit-toggle-marker-here ()
+  "Toggle an arbitrary multiedit region at point."
+  (interactive)
+  (when (and iedit-occurrences-overlays
+             (> (iedit-occurrence-string-length) 0))
+    (evil-multiedit--cleanup))
+  (let ((points (cond ((eq (evil-visual-type) 'block)
+                       (mapcar 'overlay-start evil-visual-block-overlays))
+                      (t (list (point))))))
+    (dolist (point points)
+      (let ((ov (iedit-find-overlay-in-region point point 'iedit-occurrence-overlay-name)))
+        (if ov
+            (progn
+              (setq iedit-occurrences-overlays (delete ov iedit-occurrences-overlays))
+              (delete-overlay ov))
+          (let ((ov (iedit-make-occurrence-overlay point point)))
+            (unless ov
+              (error "Failed to create marker"))
+            (push ov iedit-occurrences-overlays)
+            (dolist (prop '(insert-in-front-hooks insert-behind-hooks modification-hooks))
+              (let ((old (overlay-get ov prop)))
+                (overlay-put ov prop (append old '(evil-multiedit--update-occurrences)))))
+            (setq evil-multiedit--marker t)
+            (overlay-put ov 'before-string evil-multiedit-marker))))))
+  (if iedit-occurrences-overlays
+      (unless (evil-multiedit-state-p)
+        (evil-multiedit-state))
+    (evil-multiedit--cleanup)))
 
 ;;;###autoload (autoload 'evil-multiedit-match-and-next "evil-multiedit" nil t)
 (evil-define-command evil-multiedit-match-and-next (&optional count)
@@ -283,11 +321,16 @@ multiedit region beneath the cursor, if one exists."
     (call-interactively 'evil-ret)))
 
 ;;;###autoload
-(defalias 'evil-multiedit-next 'iedit-next-occurrence
-  "Jump to the next multiedit region.")
+(defun evil-multiedit-next ()
+  "Jump to the next multiedit region."
+  (interactive)
+  (evil-multiedit--cycle +1))
+
 ;;;###autoload
-(defalias 'evil-multiedit-prev 'iedit-prev-occurrence
-  "Jump to the previous multiedit region.")
+(defun evil-multiedit-prev ()
+  "Jump to the previous multiedit region."
+  (interactive)
+  (evil-multiedit--cycle -1))
 
 ;;;###autoload
 (defun evil-multiedit-abort (&optional inhibit-normal)
@@ -324,6 +367,28 @@ selected area is the boundary for matches. If BANG, invert
         (evil-multiedit-toggle-or-restrict-region beg end)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun evil-multiedit--cycle (n)
+  (setq iedit-occurrences-overlays (cl-sort iedit-occurrences-overlays '< :key 'overlay-start))
+  (let* ((point (point))
+         (occurrence
+          (cl-find-if (if (> n 0)
+                          (lambda (beg) (> beg point))
+                        (lambda (end) (< end point)))
+                      iedit-occurrences-overlays :key
+                      (if (> n 0) 'overlay-start 'overlay-end))))
+    (if occurrence
+        (goto-char (overlay-start occurrence))
+      (user-error "No more occurrences"))))
+
+(defun evil-multiedit--update-occurrences (&rest _)
+  (when (if evil-multiedit--marker
+            (> (iedit-occurrence-string-length) 0)
+          (= (iedit-occurrence-string-length) 0))
+    (let ((ov-str (unless evil-multiedit--marker evil-multiedit-marker)))
+      (dolist (ov iedit-occurrences-overlays)
+        (overlay-put ov 'before-string ov-str))
+      (setq evil-multiedit--marker (not evil-multiedit--marker)))))
 
 (defun evil-multiedit--scope ()
   (if (eq evil-multiedit-scope 'visible)
@@ -389,7 +454,8 @@ selected area is the boundary for matches. If BANG, invert
   (setq evil-multiedit--dont-recall nil
         evil-multiedit--pt-end nil
         evil-multiedit--pt-beg nil
-        evil-multiedit--pt-index (cons 1 1)))
+        evil-multiedit--pt-index (cons 1 1)
+        iedit-occurrences-overlays nil))
 
 (defmacro evil-multiedit--switch-to-insert-state-after (command &optional interactive)
   "Call COMMAND and switch to iedit-insert state. If INTERACTIVE is non-nil then
@@ -492,6 +558,7 @@ state."
   (define-key evil-visual-state-map (kbd "M-d") 'evil-multiedit-match-and-next)
   (define-key evil-normal-state-map (kbd "M-D") 'evil-multiedit-match-symbol-and-prev)
   (define-key evil-visual-state-map (kbd "M-D") 'evil-multiedit-match-and-prev)
+  (define-key evil-insert-state-map (kbd "M-d") 'evil-multiedit-toggle-marker-here)
   (define-key evil-visual-state-map (kbd "C-M-D") 'evil-multiedit-restore)
   (define-key evil-motion-state-map (kbd "RET") 'evil-multiedit-toggle-or-restrict-region)
   (define-key evil-multiedit-state-map (kbd "RET") 'evil-multiedit-toggle-or-restrict-region)
