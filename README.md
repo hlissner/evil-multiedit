@@ -7,8 +7,8 @@
 
 This plugin tries to fill that multi-cursor shaped hole in your heart.
 
-> Credit goes to [syl20bnr] for his [evil-iedit-state] plugin, which this plugin
-> was heavily inspired by.
+> Credit goes to [syl20bnr] for his [evil-iedit-state] plugin, which
+> this plugin was heavily inspired by.
 
 ## Why not multiple-cursors or evil-mc?
 
@@ -46,11 +46,13 @@ Evil-multiedit does not automatically bind any keys. Call
 ;; incrementally add the next unmatched match.
 (define-key evil-normal-state-map (kbd "M-d") 'evil-multiedit-match-and-next)
 ;; Match selected region.
-(define-key evil-visual-state-map (kbd "M-d") 'evil-multiedit-match-and-next)
+(define-key evil-visual-state-map (kbd "M-d") 'evil-multiedit-and-next)
+;; Insert marker at point
+(define-key evil-insert-state-map (kbd "M-d") 'evil-multiedit-toggle-marker-here)
 
 ;; Same as M-d but in reverse.
 (define-key evil-normal-state-map (kbd "M-D") 'evil-multiedit-match-and-prev)
-(define-key evil-visual-state-map (kbd "M-D") 'evil-multiedit-match-and-prev)
+(define-key evil-visual-state-map (kbd "M-D") 'evil-multiedit-and-prev)
 
 ;; OPTIONAL: If you prefer to grab symbols rather than words, use
 ;; `evil-multiedit-match-symbol-and-next` (or prev).
@@ -91,8 +93,8 @@ evil-multiedit is active or the cursor is in an iedit region:
 To disable these, set `evil-multiedit-dwim-motion-keys` to `nil` before loading
 evil-multiedit.
 
-NOTE: No need to bind a key for `evil-multiedit-abort`, pressing <kbd>ESC</kbd> in normal
-mode will invoke it.
+NOTE: No need to bind a key for `evil-multiedit-abort`, pressing <kbd>ESC</kbd>
+in normal mode will invoke it.
 
 ### Ex Command
 
@@ -115,17 +117,15 @@ Use `(evil-ex-define-cmd "ie[dit]" 'evil-multiedit-ex-match)` so you can use
 
 ### Options
 
-* `evil-multiedit-dwim-motion-keys` (default: `t`): Whether or not evil's motion
-  keys should act differently when the cursor is inside multiedit regions. Must
-  be set before evil-multiedit is loaded.
-* `evil-multiedit-ignore-indent-and-trailing` (default: `t`): When you match
-  forward whitespace and this is non-nil, leading and trailing whitespace will
-  be ignored.
+* `evil-multiedit-dwim-motion-keys` (default: `t`): If non-nil, evil's motion
+  keys behave differently when the point is inside a multiedit region. Must be
+  set before evil-multiedit is loaded.
+* `evil-multiedit-ignore-indent-and-trailing` (default: `t`): If non-nil, skip
+  over indentation and trailing whitespace when matching whitespace.
 * `evil-multiedit-scope` (default `nil`): How far evil-multiedit should look for
   incremental matches (doesn't affect `evil-multiedit-match-all` or
-  `evil-multiedit-ex-match`). Accepts 'visible, or anything that
-  `bounds-of-thing-at-point` accept, such as `'defun`, `'sexp` or `'email`. If `nil`,
-  evil-multiedit search the whole buffer.
+  `evil-multiedit-ex-match`). Accepts anything that `bounds-of-thing-at-point`
+  accepts, such as `'defun`, `'sexp`, `'email` or the default, `'buffer`.
 * `evil-multiedit-smart-match-boundaries` (default `t`): If non-nil, multiedit
   will try to be smart about match boundaries when invoked from normal mode.
   E.g.
@@ -136,9 +136,8 @@ Use `(evil-ex-define-cmd "ie[dit]" 'evil-multiedit-ex-match)` so you can use
   highlighted occurrences are stored in `regexp-search-ring`, so that after
   exiting iedit `evil-search-next` and `evil-search-previous` (usually n and N)
   use the last occurrence as if it were the last string in the search history.
-* `evil-multiedit-follow-matches` (default `nil`): If non-nil, the
-  cursor will jump to each additional match, rather than remain in its
-  original position.
+* `evil-multiedit-follow-matches` (default `nil`): If non-nil, the cursor will
+  jump to each additional match, rather than remain in its original position.
 
 
 [evil-mode]: https://bitbucket.org/lyro/evil/wiki/Home
