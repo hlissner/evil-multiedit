@@ -109,6 +109,7 @@ Use `(evil-ex-define-cmd "ie[dit]" 'evil-multiedit-ex-match)` so you can use
 * `evil-multiedit-match-and-prev`
 * `evil-multiedit-match-symbol-and-next`
 * `evil-multiedit-match-symbol-and-prev`
+* `evil-multiedit-toggle-marker-here`
 * `evil-multiedit-toggle-or-restrict-region`
 * `evil-multiedit-next`
 * `evil-multiedit-prev`
