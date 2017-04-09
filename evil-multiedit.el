@@ -291,8 +291,11 @@ or visual mode.
                      (evil-normal-state)
                      (save-excursion
                        (evil-multiedit--start-regexp occurrence beg end)
-                       (setq evil-ex-search-pattern (evil-ex-make-search-pattern occurrence))
-                       (evil-ex-find-next nil nil t)))
+                       (let ((pattern (evil-ex-make-search-pattern occurrence)))
+                         (when evil-multiedit-store-in-search-history
+                           (setq evil-ex-search-pattern pattern))
+                         (let ((evil-ex-search-pattern pattern))
+                           (evil-ex-find-next nil nil t)))))
                  (user-error "Can't mark anything")))))))
   (length iedit-occurrences-overlays))
 
