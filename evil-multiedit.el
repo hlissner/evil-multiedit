@@ -288,7 +288,7 @@ or visual mode.
                    (progn
                      (setq evil-multiedit--pt-beg beg
                            evil-multiedit--pt-end end)
-                     (evil-normal-state)
+                     (evil-multiedit-state)
                      (save-excursion
                        (evil-multiedit--start-regexp occurrence beg end)
                        (let ((pattern (evil-ex-make-search-pattern occurrence)))
