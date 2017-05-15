@@ -355,6 +355,11 @@ multiedit region beneath the cursor, if one exists."
   (unless inhibit-normal
     (evil-normal-state)))
 
+;;;###autoload
+(defun evil-multiedit-exit-hook ()
+  "Abort the current multiedit session without switching to normal mode."
+  (evil-multiedit-abort t))
+
 ;;;###autoload (autoload 'evil-multiedit-ex-match "evil-multiedit" nil t)
 (evil-define-command evil-multiedit-ex-match (&optional beg end bang regexp)
   "Ex command for invoking evil-multiedit with a regular expression. The
@@ -595,6 +600,7 @@ state."
   :cursor (bar . 2)
   :message "-- MULTIEDIT INSERT --")
 
+(add-hook 'evil-normal-state-entry-hook #'evil-multiedit-exit-hook)
 (when evil-multiedit-dwim-motion-keys
   (let ((map evil-multiedit-insert-state-map))
     (define-key map (kbd "C-g") #'evil-multiedit-abort)
