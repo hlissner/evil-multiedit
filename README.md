@@ -5,23 +5,18 @@
 
 # evil-multiedit
 
-This plugin tries to fill that multi-cursor shaped hole in your heart.
+This plugin was an answer for the lack of proper multiple cursor support in
+Emacs+evil. It mainly allows you to select and edit matches interactively,
+integrating `iedit-mode` into evil-mode with an attempt at sensible defaults.
 
-> Credit goes to [syl20bnr] for his [evil-iedit-state] plugin, which
-> this plugin was heavily inspired by.
-
-## Why not multiple-cursors or evil-mc?
-
-It could be the [over] complexity of my [emacs.d], but I've never managed to get
-[evil-mc] to work for me, and `multiple-cursors`
-[doesn't play nice with evil-mode](https://github.com/magnars/multiple-cursors.el/issues/17).
-
-So I hacked this plugin together to integrate `iedit-mode` into evil-mode. It
-takes after [vim-multiedit], offers an approach to multiple cursors like Sublime
-Text (or Atom) have, and compliments evil's in-built column and line-wise
-editing operations.
+Since, `evil-mc` has matured, and now that I use both I've found they can
+coexist, filling different niches, complimenting evil's built-in
+column/line-wise editing operations.
 
 ![evil-multiedit](../screenshots/main.gif?raw=true)
+
+> Thanks to [syl20bnr] for his [evil-iedit-state] plugin, which this plugin was
+> heavily inspired by.
 
 ## Installation
 
@@ -98,8 +93,7 @@ in normal mode will invoke it.
 
 ### Ex Command
 
-Use `(evil-ex-define-cmd "ie[dit]" 'evil-multiedit-ex-match)` so you can use
-`:iedit <REGEX>` to highlight matches with a regular expression.
+`:iedit [REGEXP]` is available for invoking multiedit from the ex command line.
 
 ### Commands
 
@@ -139,6 +133,54 @@ Use `(evil-ex-define-cmd "ie[dit]" 'evil-multiedit-ex-match)` so you can use
   use the last occurrence as if it were the last string in the search history.
 * `evil-multiedit-follow-matches` (default `nil`): If non-nil, the cursor will
   jump to each additional match, rather than remain in its original position.
+
+### Co-existing with evil-mc
+
+How the two plugins mingle is entirely personal preference. Mine is to invoke a
+limited subset of evil-multiedit functionality from visual mode:
+
+```emacs-lisp
+(let ((map evil-visual-state-map))
+  (define-key map (kbd "M-d")   #'evil-multiedit-match-and-next)
+  (define-key map (kbd "M-D")   #'evil-multiedit-match-and-prev)
+  (define-key map (kbd "C-M-d") #'evil-multiedit-restore)
+  (define-key map (kbd "R")     #'evil-multiedit-match-all))
+
+(let ((me-map  evil-multiedit-state-map)
+      (mei-map evil-multiedit-insert-state-map))
+  (define-key me-map (kbd "M-d") #'evil-multiedit-match-and-next)
+  (define-key me-map (kbd "M-D") #'evil-multiedit-match-and-prev)
+  (define-key me-map (kbd "RET") #'evil-multiedit-toggle-or-restrict-region)
+
+  (dolist (map (list me-map mei-map))
+    (define-key map (kbd "C-n") #'evil-multiedit-next)
+    (define-key map (kbd "C-p") #'evil-multiedit-prev)))
+```
+
+And promote a simplified evil-mc workflow from normal mode:
+
+```emacs-lisp
+;; Start evil-mc in paused mode.
+(add-hook 'evil-mc-mode-hook #'evil-mc-pause-cursors)
+(add-hook 'evil-mc-before-cursors-created #'evil-mc-pause-cursors)
+
+(global-evil-mc-mode 1)
+
+;; My workflow is to place the cursors, get into position, then enable evil-mc
+;; by invoking `+evil/mc-toggle-cursors'
+(defun +evil/mc-toggle-cursors ()
+  "Toggle frozen state of evil-mc cursors."
+  (interactive)
+  (setq evil-mc-frozen (not (and (evil-mc-has-cursors-p)
+                                  evil-mc-frozen))))
+;; ...or going into insert mode
+(add-hook 'evil-insert-state-entry-hook #'evil-mc-resume-cursors)
+
+(define-key evil-normal-state-map (kbd "M-d") #'evil-mc-make-cursor-here)
+(define-key evil-mc-key-map       (kbd "M-D") #'+evil/mc-toggle-cursors)
+```
+
+You can find [my configuration in my emacs.d](https://github.com/hlissner/.emacs.d/blob/master/modules/feature/evil/config.el#L319).
 
 
 [evil-mode]: https://bitbucket.org/lyro/evil/wiki/Home
