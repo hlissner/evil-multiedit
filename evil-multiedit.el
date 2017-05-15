@@ -582,11 +582,11 @@ state."
   :message "-- MULTIEDIT --"
   (if (eq evil-state 'multiedit)
       (progn
-        (add-hook 'iedit-mode-end-hook 'evil-multiedit--cleanup)
-        (advice-add 'evil-force-normal-state :before 'evil-multiedit-abort)
-        (if (evil-replace-state-p) (call-interactively 'iedit-mode)))
-    (remove-hook 'iedit-mode-end-hook 'evil-multiedit--cleanup)
-    (advice-remove 'evil-force-normal-state 'evil-multiedit-abort)))
+        (add-hook 'iedit-mode-end-hook #'evil-multiedit--cleanup)
+        (advice-add 'evil-force-normal-state :before #'evil-multiedit-abort)
+        (if (evil-replace-state-p) (call-interactively #'iedit-mode)))
+    (remove-hook 'iedit-mode-end-hook #'evil-multiedit--cleanup)
+    (advice-remove 'evil-force-normal-state #'evil-multiedit-abort)))
 
 (evil-define-state multiedit-insert
   "Replace insert state in `iedit state'."
