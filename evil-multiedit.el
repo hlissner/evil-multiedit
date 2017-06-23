@@ -208,7 +208,7 @@ normal mode, it grabs whole symbols rather than words."
              (> (iedit-occurrence-string-length) 0))
     (evil-multiedit--cleanup))
   (let ((points (cond ((eq (evil-visual-type) 'block)
-                       (mapcar 'overlay-start evil-visual-block-overlays))
+                       (mapcar #'overlay-start evil-visual-block-overlays))
                       (t (list (point))))))
     (dolist (point points)
       (let ((ov (iedit-find-overlay-in-region point point 'iedit-occurrence-overlay-name)))
@@ -318,11 +318,11 @@ multiedit region beneath the cursor, if one exists."
                    (beg (or beg (region-beginning)))
                    (end (or end (region-end))))
                (iedit-done)
-               (call-interactively 'iedit-mode)
+               (call-interactively #'iedit-mode)
                (save-excursion (iedit-restrict-region beg end))
                (evil-previous-line)))
             (t (iedit-toggle-selection)))
-    (call-interactively 'evil-ret)))
+    (call-interactively #'evil-ret)))
 
 ;;;###autoload
 (defun evil-multiedit-next ()
@@ -475,7 +475,7 @@ selected area is the boundary for matches. If BANG, invert
 COMMAND is called interactively."
   `(progn
      (if ,interactive
-         (call-interactively ',command)
+         (call-interactively #',command)
        (funcall ',command))
      ;; required to correctly update the cursors
      (evil-multiedit-state)
@@ -486,14 +486,14 @@ COMMAND is called interactively."
   (let ((overlay (iedit-find-current-occurrence-overlay)))
     (if overlay
         (goto-char (overlay-start overlay))
-      (call-interactively 'evil-digit-argument-or-evil-beginning-of-line))))
+      (call-interactively #'evil-digit-argument-or-evil-beginning-of-line))))
 
 (defun evil-multiedit--goto-overlay-end ()
   "Return the position of the end of the current overlay."
   (let ((overlay (iedit-find-current-occurrence-overlay)))
     (if overlay
         (goto-char (overlay-end overlay))
-      (call-interactively 'evil-end-of-line))))
+      (call-interactively #'evil-end-of-line))))
 
 (defun evil-multiedit--beginning-of-line ()
   "Go to the beginning of the current overlay."
@@ -546,13 +546,13 @@ state."
   (let ((ov (iedit-find-current-occurrence-overlay)))
     (if ov
         (evil-visual-make-region (overlay-start ov) (1- (overlay-end ov)) 'exclusive)
-      (call-interactively 'evil-visual-line))))
+      (call-interactively #'evil-visual-line))))
 
 (defun evil-multiedit--substitute ()
   "Wipe all the occurrences and switch in `iedit-insert state'"
   (interactive)
   (if (not (iedit-find-current-occurrence-overlay))
-      (call-interactively 'evil-change-line)
+      (call-interactively #'evil-change-line)
     (iedit-delete-occurrences)
     (evil-multiedit-insert-state)))
 
@@ -566,20 +566,20 @@ state."
 
 (defun evil-multiedit-default-keybinds ()
   "Sets up the default keybindings for `evil-multiedit'."
-  (define-key evil-visual-state-map "R" 'evil-multiedit-match-all)
-  (define-key evil-normal-state-map (kbd "M-d") 'evil-multiedit-match-symbol-and-next)
-  (define-key evil-visual-state-map (kbd "M-d") 'evil-multiedit-match-and-next)
-  (define-key evil-normal-state-map (kbd "M-D") 'evil-multiedit-match-symbol-and-prev)
-  (define-key evil-visual-state-map (kbd "M-D") 'evil-multiedit-match-and-prev)
-  (define-key evil-insert-state-map (kbd "M-d") 'evil-multiedit-toggle-marker-here)
-  (define-key evil-visual-state-map (kbd "C-M-D") 'evil-multiedit-restore)
-  (define-key evil-motion-state-map (kbd "RET") 'evil-multiedit-toggle-or-restrict-region)
-  (define-key evil-multiedit-state-map (kbd "RET") 'evil-multiedit-toggle-or-restrict-region)
-  (define-key evil-multiedit-state-map (kbd "C-n") 'evil-multiedit-next)
-  (define-key evil-multiedit-state-map (kbd "C-p") 'evil-multiedit-prev)
-  (define-key evil-multiedit-insert-state-map (kbd "C-n") 'evil-multiedit-next)
-  (define-key evil-multiedit-insert-state-map (kbd "C-p") 'evil-multiedit-prev)
-  (evil-ex-define-cmd "ie[dit]" 'evil-multiedit-ex-match))
+  (define-key evil-visual-state-map "R" #'evil-multiedit-match-all)
+  (define-key evil-normal-state-map (kbd "M-d") #'evil-multiedit-match-symbol-and-next)
+  (define-key evil-visual-state-map (kbd "M-d") #'evil-multiedit-match-and-next)
+  (define-key evil-normal-state-map (kbd "M-D") #'evil-multiedit-match-symbol-and-prev)
+  (define-key evil-visual-state-map (kbd "M-D") #'evil-multiedit-match-and-prev)
+  (define-key evil-insert-state-map (kbd "M-d") #'evil-multiedit-toggle-marker-here)
+  (define-key evil-visual-state-map (kbd "C-M-D") #'evil-multiedit-restore)
+  (define-key evil-motion-state-map (kbd "RET") #'evil-multiedit-toggle-or-restrict-region)
+  (define-key evil-multiedit-state-map (kbd "RET") #'evil-multiedit-toggle-or-restrict-region)
+  (define-key evil-multiedit-state-map (kbd "C-n") #'evil-multiedit-next)
+  (define-key evil-multiedit-state-map (kbd "C-p") #'evil-multiedit-prev)
+  (define-key evil-multiedit-insert-state-map (kbd "C-n") #'evil-multiedit-next)
+  (define-key evil-multiedit-insert-state-map (kbd "C-p") #'evil-multiedit-prev)
+  (evil-ex-define-cmd "ie[dit]" #'evil-multiedit-ex-match))
 
 (evil-define-state multiedit
   "`multiedit state' interfacing iedit mode."
@@ -587,13 +587,13 @@ state."
   :enable (normal)
   :cursor box
   :message "-- MULTIEDIT --"
-  (if (eq evil-state 'multiedit)
-      (progn
-        (add-hook 'iedit-mode-end-hook #'evil-multiedit--cleanup)
-        (advice-add 'evil-force-normal-state :before #'evil-multiedit-abort)
-        (if (evil-replace-state-p) (call-interactively #'iedit-mode)))
-    (remove-hook 'iedit-mode-end-hook #'evil-multiedit--cleanup)
-    (advice-remove 'evil-force-normal-state #'evil-multiedit-abort)))
+  (cond ((eq evil-state 'multiedit)
+         (add-hook 'iedit-mode-end-hook #'evil-multiedit--cleanup)
+         (advice-add 'evil-force-normal-state :before #'evil-multiedit-abort)
+         (if (evil-replace-state-p) (call-interactively #'iedit-mode)))
+        (t
+         (remove-hook 'iedit-mode-end-hook #'evil-multiedit--cleanup)
+         (advice-remove 'evil-force-normal-state #'evil-multiedit-abort))))
 
 (evil-define-state multiedit-insert
   "Replace insert state in `iedit state'."
