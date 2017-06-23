@@ -5,11 +5,11 @@
 
 # evil-multiedit
 
-This plugin was an answer for the lack of proper multiple cursor support in
-Emacs+evil. It mainly allows you to select and edit matches interactively,
-integrating `iedit-mode` into evil-mode with an attempt at sensible defaults.
+This plugin was an answer to the lack of proper multiple cursor support in
+Emacs+evil. It allows you to select and edit matches interactively, integrating
+`iedit-mode` into evil-mode with an attempt at sensible defaults.
 
-Since, `evil-mc` has matured, and now that I use both I've found they can
+Since then, [evil-mc] has matured, and now that I use both I've found they can
 coexist, filling different niches, complimenting evil's built-in
 column/line-wise editing operations.
 
@@ -136,56 +136,51 @@ in normal mode will invoke it.
 
 ### Co-existing with evil-mc
 
-How the two plugins mingle is entirely personal preference. Mine is to invoke a
-limited subset of evil-multiedit functionality from visual mode:
+How the two plugins mingle is entirely personal preference. Mine is to bind
+evil-multiedit to <kbd>M-d</kbd>/<kbd>M-D</kbd>, and evil-mc to a bunch of keys
+prefixed with <kbd>gz</kbd>:
 
 ```emacs-lisp
-(let ((map evil-visual-state-map))
-  (define-key map (kbd "M-d")   #'evil-multiedit-match-and-next)
-  (define-key map (kbd "M-D")   #'evil-multiedit-match-and-prev)
-  (define-key map (kbd "C-M-d") #'evil-multiedit-restore)
-  (define-key map (kbd "R")     #'evil-multiedit-match-all))
+;; evil-multiedit
+:v  "R"     #'evil-multiedit-match-all
+:n  "M-d"   #'evil-multiedit-match-symbol-and-next
+:n  "M-D"   #'evil-multiedit-match-symbol-and-prev
+:v  "M-d"   #'evil-multiedit-match-and-next
+:v  "M-D"   #'evil-multiedit-match-and-prev
+:nv "C-M-d" #'evil-multiedit-restore
+(:after evil-multiedit
+  (:map evil-multiedit-state-map
+    "M-d" #'evil-multiedit-match-and-next
+    "M-D" #'evil-multiedit-match-and-prev
+    "RET" #'evil-multiedit-toggle-or-restrict-region)
+  (:map (evil-multiedit-state-map evil-multiedit-insert-state-map)
+    "C-n" #'evil-multiedit-next
+    "C-p" #'evil-multiedit-prev))
 
-(let ((me-map  evil-multiedit-state-map)
-      (mei-map evil-multiedit-insert-state-map))
-  (define-key me-map (kbd "M-d") #'evil-multiedit-match-and-next)
-  (define-key me-map (kbd "M-D") #'evil-multiedit-match-and-prev)
-  (define-key me-map (kbd "RET") #'evil-multiedit-toggle-or-restrict-region)
-
-  (dolist (map (list me-map mei-map))
-    (define-key map (kbd "C-n") #'evil-multiedit-next)
-    (define-key map (kbd "C-p") #'evil-multiedit-prev)))
+;; evil-mc
+(:prefix "gz"
+  :nv "m" #'evil-mc-make-all-cursors
+  :nv "u" #'evil-mc-undo-all-cursors
+  :nv "z" #'+evil/mc-toggle-cursors
+  :nv "c" #'+evil/mc-make-cursor-here
+  :nv "n" #'evil-mc-make-and-goto-next-cursor
+  :nv "p" #'evil-mc-make-and-goto-prev-cursor
+  :nv "N" #'evil-mc-make-and-goto-last-cursor
+  :nv "P" #'evil-mc-make-and-goto-first-cursor)
+(:after evil-mc
+  :map evil-mc-key-map
+  :nv "C-n" #'evil-mc-make-and-goto-next-cursor
+  :nv "C-N" #'evil-mc-make-and-goto-last-cursor
+  :nv "C-p" #'evil-mc-make-and-goto-prev-cursor
+  :nv "C-P" #'evil-mc-make-and-goto-first-cursor)
 ```
 
-And promote a simplified evil-mc workflow from normal mode:
-
-```emacs-lisp
-;; Start evil-mc in paused mode.
-(add-hook 'evil-mc-mode-hook #'evil-mc-pause-cursors)
-(add-hook 'evil-mc-before-cursors-created #'evil-mc-pause-cursors)
-
-(global-evil-mc-mode 1)
-
-;; My workflow is to place the cursors, get into position, then enable evil-mc
-;; by invoking `+evil/mc-toggle-cursors'
-(defun +evil/mc-toggle-cursors ()
-  "Toggle frozen state of evil-mc cursors."
-  (interactive)
-  (setq evil-mc-frozen (not (and (evil-mc-has-cursors-p)
-                                  evil-mc-frozen))))
-;; ...or going into insert mode
-(add-hook 'evil-insert-state-entry-hook #'evil-mc-resume-cursors)
-
-(define-key evil-normal-state-map (kbd "M-d") #'evil-mc-make-cursor-here)
-(define-key evil-mc-key-map       (kbd "M-D") #'+evil/mc-toggle-cursors)
-```
-
-You can find [my configuration in my emacs.d](https://github.com/hlissner/.emacs.d/blob/master/modules/feature/evil/config.el#L319).
+You can find [my evil-mc/evil-multiedit config in my emacs.d](https://github.com/hlissner/.emacs.d/blob/master/modules/feature/evil/config.el#L285).
 
 
-[evil-mode]: https://bitbucket.org/lyro/evil/wiki/Home
-[vim-multiedit]: https://github.com/hlissner/vim-multiedit
-[syl20bnr]: https://github.com/syl20bnr
-[evil-iedit-state]: https://github.com/syl20bnr/evil-iedit-state
 [emacs.d]: https://github.com/hlissner/.emacs.d
+[evil-iedit-state]: https://github.com/syl20bnr/evil-iedit-state
 [evil-mc]: https://github.com/gabesoft/evil-mc
+[evil-mode]: https://bitbucket.org/lyro/evil/wiki/Home
+[syl20bnr]: https://github.com/syl20bnr
+[vim-multiedit]: https://github.com/hlissner/vim-multiedit
