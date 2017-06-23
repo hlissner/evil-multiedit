@@ -1,3 +1,4 @@
+![evil-multiedit](https://img.shields.io/badge/evil--multiedit-v1.3.8-blue.svg)
 [![MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 [![MELPA](http://melpa.org/packages/evil-multiedit-badge.svg)](http://melpa.org/#/evil-multiedit)
 [![MELPA Stable](http://stable.melpa.org/packages/evil-multiedit-badge.svg)](http://stable.melpa.org/#/evil-multiedit)
