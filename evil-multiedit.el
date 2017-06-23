@@ -380,14 +380,14 @@ selected area is the boundary for matches. If BANG, invert
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun evil-multiedit--cycle (n)
-  (setq iedit-occurrences-overlays (cl-sort iedit-occurrences-overlays '< :key 'overlay-start))
+  (setq iedit-occurrences-overlays (cl-sort iedit-occurrences-overlays (if (> n 0) #'< #'>) :key #'overlay-start))
   (let* ((point (point))
          (occurrence
           (cl-find-if (if (> n 0)
                           (lambda (beg) (> beg point))
                         (lambda (end) (< end point)))
-                      iedit-occurrences-overlays :key
-                      (if (> n 0) 'overlay-start 'overlay-end))))
+                      iedit-occurrences-overlays
+                      :key (if (> n 0) #'overlay-start #'overlay-end))))
     (if occurrence
         (goto-char (overlay-start occurrence))
       (user-error "No more occurrences"))))
