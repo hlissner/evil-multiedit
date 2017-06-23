@@ -628,14 +628,12 @@ state."
     (define-key map "za"        #'iedit-toggle-unmatched-lines-visible)))
 
 ;; support for `evil-escape'
-(eval-after-load "evil-escape"
-  (lambda ()
-    (defun evil-multiedit-escape-func (orig-fn &rest args)
-      (pcase evil-state
-        (`multiedit 'evil-multiedit-abort)
-        (`multiedit-insert 'evil-multiedit-state)
-        (_ (apply orig-fn args))))
-    (advice-add #'evil-escape-func :around #'evil-multiedit-escape-func)))
+(defun evil-multiedit-escape-func (orig-fn &rest args)
+  (pcase evil-state
+    (`multiedit 'evil-multiedit-abort)
+    (`multiedit-insert 'evil-multiedit-state)
+    (_ (apply orig-fn args))))
+(advice-add #'evil-escape-func :around #'evil-multiedit-escape-func)
 
 (provide 'evil-multiedit)
 ;;; evil-multiedit.el ends here
