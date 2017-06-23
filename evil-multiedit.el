@@ -152,8 +152,8 @@ symbol variants)."
 (defvar evil-multiedit--pt-index (cons 1 1) "The forward/backward search indices")
 
 (defvar evil-multiedit--dont-recall nil)
-(defvar evil-multiedit--last-markers '() "List of markers from last multiedit.")
-(make-variable-buffer-local 'evil-multiedit--last-markers)
+(defvar evil-multiedit--last '() "Details about the last multiedit.")
+(make-variable-buffer-local 'evil-multiedit--last)
 
 (defvar evil-multiedit--marker nil)
 
@@ -163,17 +163,12 @@ symbol variants)."
 (defun evil-multiedit-restore ()
   "Restore the last group of multiedit regions."
   (interactive)
-  (iedit-mode 4)
-  (when evil-multiedit--last-markers
-    (let ((beg-list (mapcar (lambda (m) (marker-position m)) evil-multiedit--last-markers)))
-      (save-excursion
-        (mapc (lambda (ov)
-                (let ((beg (overlay-start ov)))
-                  (unless (memq beg beg-list)
-                    (goto-char beg)
-                    (iedit-toggle-selection))))
-              iedit-occurrences-overlays))))
-  (evil-multiedit-state))
+  (unless evil-multiedit--last
+    (user-error "No previous multiedit session to restore"))
+  (cl-destructuring-bind (beg end occurrence) evil-multiedit--last
+    (iedit-start occurrence beg end)
+    (iedit-restrict-region beg end)
+    (evil-multiedit-state)))
 
 ;;;###autoload
 (defun evil-multiedit-match-all ()
@@ -342,18 +337,22 @@ multiedit region beneath the cursor, if one exists."
 (defun evil-multiedit-abort (&optional inhibit-normal)
   "Clear all multiedit regions, clean up and revert to normal state."
   (interactive)
-  (mapc (lambda (m) (set-marker m nil)) evil-multiedit--last-markers)
-  (if evil-multiedit--dont-recall
-      (setq evil-multiedit--last-markers '())
-    (mapc (lambda (ov)
-            (let ((m (make-marker)))
-              (set-marker-insertion-type m t)
-              (set-marker m (overlay-start ov))
-              (push m evil-multiedit--last-markers)))
-          iedit-occurrences-overlays))
-  (iedit-done)
-  (unless inhibit-normal
-    (evil-normal-state)))
+  (when (or iedit-occurrences-overlays
+            (evil-multiedit-state-p)
+            (evil-multiedit-insert-state-p))
+    (setq evil-multiedit--last nil)
+    (when (and iedit-occurrences-overlays (not evil-multiedit--dont-recall))
+      (setq iedit-occurrences-overlays
+            (cl-sort iedit-occurrences-overlays #'< :key #'overlay-start))
+      (let ((beg (overlay-start (car iedit-occurrences-overlays)))
+            (end (overlay-end (car (last iedit-occurrences-overlays)))))
+        (setq-local evil-multiedit--last
+                    (list (save-excursion (goto-char beg) (line-beginning-position))
+                          (save-excursion (goto-char end) (line-end-position))
+                          iedit-initial-string-local))))
+    (iedit-done)
+    (unless inhibit-normal
+      (evil-normal-state))))
 
 ;;;###autoload
 (defun evil-multiedit-exit-hook ()
