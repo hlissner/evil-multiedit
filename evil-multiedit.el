@@ -435,7 +435,7 @@ selected area is the boundary for matches. If BANG, invert
              (setq bounds (bounds-of-thing-at-point 'symbol)))
             ((bounds-of-thing-at-point 'word)
              (setq regexp
-                   (format "\\_<%s\\_>"
+                   (format "\\<%s\\>"
                            (regexp-quote (thing-at-point 'word t))))
              (setq bounds (bounds-of-thing-at-point 'word))))
       (list regexp (car bounds) (cdr bounds)))))
