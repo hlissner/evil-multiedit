@@ -230,6 +230,13 @@ normal mode, it grabs whole symbols rather than words."
         (evil-multiedit-state))
     (evil-multiedit--cleanup)))
 
+;;;###autoload (autoload 'evil-multiedit-operator "evil-multiedit" nil t)
+(evil-define-operator evil-multiedit-operator (beg end type &optional count)
+  "Select an iedit region using evil text-objects."
+  (interactive "<R><c>")
+  (evil-visual-select beg end type)
+  (evil-multiedit-match-and-next count))
+
 ;;;###autoload (autoload 'evil-multiedit-match-and-next "evil-multiedit" nil t)
 (evil-define-command evil-multiedit-match-and-next (&optional count)
   "Marks the word at point (or, if in visual mode, the selection), then marks
