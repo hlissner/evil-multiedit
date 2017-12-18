@@ -365,6 +365,14 @@ multiedit region beneath the cursor, if one exists."
       (evil-normal-state))))
 
 ;;;###autoload
+(defun evil-multiedit-insert-state-escape ()
+  "Exit to `evil-multiedit-state' and move the cursor back one, to be consistent
+with behavior when exiting vanilla insert state."
+  (interactive)
+  (evil-multiedit-state)
+  (evil-move-cursor-back))
+
+;;;###autoload
 (defun evil-multiedit-exit-hook ()
   "Abort the current multiedit session without switching to normal mode."
   (evil-multiedit-abort t))
@@ -613,7 +621,7 @@ state."
 (when evil-multiedit-dwim-motion-keys
   (let ((map evil-multiedit-insert-state-map))
     (define-key map (kbd "C-g") #'evil-multiedit-abort)
-    (define-key map [escape]    #'evil-multiedit-state))
+    (define-key map [escape]    #'evil-multiedit-insert-state-escape))
 
   (let ((map evil-multiedit-state-map))
     (evil-redirect-digit-argument map "0" #'evil-multiedit--beginning-of-line)
