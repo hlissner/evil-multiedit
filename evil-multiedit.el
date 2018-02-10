@@ -5,7 +5,7 @@
 ;; Author: Henrik Lissner <http://github/hlissner>
 ;; Maintainer: Henrik Lissner <henrik@lissner.net>
 ;; Created: February 20, 2016
-;; Modified: December 18, 2017
+;; Modified: February 09, 2018
 ;; Version: 1.3.9
 ;; Keywords: multiple cursors, editing, iedit
 ;; Homepage: https://github.com/hlissner/evil-multiedit
@@ -643,14 +643,6 @@ state."
     (define-key map [escape]    #'evil-multiedit-abort)
     (define-key map "V"         #'evil-multiedit--visual-line)
     (define-key map "za"        #'iedit-toggle-unmatched-lines-visible)))
-
-;; support for `evil-escape'
-(defun evil-multiedit-escape-func (orig-fn &rest args)
-  (pcase evil-state
-    (`multiedit 'evil-multiedit-abort)
-    (`multiedit-insert 'evil-multiedit-state)
-    (_ (apply orig-fn args))))
-(advice-add #'evil-escape-func :around #'evil-multiedit-escape-func)
 
 (provide 'evil-multiedit)
 ;;; evil-multiedit.el ends here
