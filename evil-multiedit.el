@@ -129,6 +129,13 @@ history."
   :group 'evil-multiedit
   :type 'boolean)
 
+
+(defcustom evil-multiedit-wrap-around t
+  "If non-nil, match item before first or after last wraps around."
+  :group 'evil-multiedit
+  :type 'boolean)
+
+
 (defcustom evil-multiedit-scope 'buffer
   "How far evil-multiedit should look for additional matches. Accepts 'visible,
 or anything that `bounds-of-thing-at-point' accept, such as 'defun, 'sexp or
@@ -264,8 +271,19 @@ or visual mode.
                (unless (re-search-forward iedit-initial-string-local
                                           (if forward-p (cdr bounds) (car bounds))
                                           t (if forward-p 1 -1))
-                 (goto-char origin)
-                 (user-error "No more matches"))
+                 (if evil-multiedit-wrap-around
+                     (progn
+                       (goto-char (if forward-p (point-min) (point-max)))
+                       (unless (re-search-forward iedit-initial-string-local
+                                                  (if forward-p (cdr bounds) (car bounds))
+                                                  t (if forward-p 1 -1))
+                         (goto-char origin)
+                         (user-error "No more matches"))
+                       (setq evil-multiedit--pt-beg (match-beginning 0)
+                             evil-multiedit--pt-end (match-end 0)))
+                   (progn
+                     (goto-char origin)
+                     (user-error "No more matches"))))
                ;; Skip leading and trailing whitespace, if possible
                (while (and whitespace-p evil-multiedit-ignore-indent-and-trailing
                            (or (<= (point) (save-excursion (back-to-indentation) (point)))
@@ -407,7 +425,10 @@ selected area is the boundary for matches. If BANG, invert
                       :key (if (> n 0) #'overlay-start #'overlay-end))))
     (if occurrence
         (goto-char (overlay-start occurrence))
-      (user-error "No more occurrences"))))
+      (if evil-multiedit-wrap-around
+          (if (> n 0) (iedit-goto-first-occurrence)
+            (iedit-goto-last-occurrence))
+        (user-error "No more occurrences")))))
 
 (defun evil-multiedit--update-occurrences (&rest _)
   (when (if evil-multiedit--marker
@@ -577,6 +598,25 @@ state."
   (iedit-delete-occurrences)
   (evil-paste-before count))
 
+(defun evil-multiedit--paste-after (count)
+  "Paste the string like evil-paste-after."
+  (interactive "P")
+  (evil-multiedit-insert-state)
+  (goto-char (+ 1 (point)))
+  (let ((text (car kill-ring)))
+    (dotimes (i (or count 1))
+      (insert text)))
+  (evil-multiedit-state))
+
+(defun evil-multiedit--paste-before (count)
+  "Paste the string like evil-paste-before."
+  (interactive "P")
+  (evil-multiedit-insert-state)
+  (let ((text (car kill-ring)))
+    (dotimes (i (or count 1))
+      (insert text)))
+  (evil-multiedit-state))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun evil-multiedit-default-keybinds ()
@@ -638,7 +678,8 @@ state."
     (define-key map "I"         #'evil-multiedit--insert-line)
     (define-key map "o"         #'evil-multiedit--open-below)
     (define-key map "O"         #'evil-multiedit--open-above)
-    (define-key map "p"         #'evil-multiedit--paste-replace)
+    (define-key map "p"         #'evil-multiedit--paste-after)
+    (define-key map "P"         #'evil-multiedit--paste-before)
     (define-key map (kbd "C-g") #'evil-multiedit-abort)
     (define-key map [escape]    #'evil-multiedit-abort)
     (define-key map "V"         #'evil-multiedit--visual-line)
