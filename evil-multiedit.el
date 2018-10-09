@@ -568,14 +568,22 @@ state."
   (interactive)
   (if (not (iedit-find-current-occurrence-overlay))
       (call-interactively #'evil-change-line)
-    (iedit-delete-occurrences)
+    (evil-multiedit--delete-occurrences)
     (evil-multiedit-insert-state)))
 
 (defun evil-multiedit--paste-replace (count)
   "Replace the selection with the yanked text."
   (interactive "P")
-  (iedit-delete-occurrences)
+  (evil-multiedit--delete-occurrences)
   (evil-paste-before count))
+
+(defun evil-multiedit--delete-occurrences ()
+  "Delete occurrences."
+  (interactive "*")
+  (iedit-barf-if-buffering)
+  (save-excursion
+    (dolist (occurrence iedit-occurrences-overlays)
+      (delete-region (overlay-start occurrence) (overlay-end occurrence)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -631,7 +639,7 @@ state."
     (define-key map "A"         #'evil-multiedit--append-line)
     (define-key map "c"         #'evil-multiedit--change)
     (define-key map "C"         #'evil-multiedit--substitute)
-    (define-key map "D"         #'iedit-delete-occurrences)
+    (define-key map "D"         #'evil-multiedit--delete-occurrences)
     (define-key map "gg"        #'iedit-goto-first-occurrence)
     (define-key map "G"         #'iedit-goto-last-occurrence)
     (define-key map "i"         #'evil-multiedit-insert-state)
