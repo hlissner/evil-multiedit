@@ -365,6 +365,31 @@ multiedit region beneath the cursor, if one exists."
       (evil-normal-state))))
 
 ;;;###autoload
+(defun evil-mc-vertical-align (character)
+  "Vertically aligns all cursors with a given CHARACTER to the rightmost one.
+Might not behave as intended if more than one cursors are on the same line."
+  (interactive "c")
+  (let ((rightest-column (current-column)))
+    (evil-mc-execute-for-all-cursors
+     (lambda (x) "get the rightest cursor"
+       (interactive)
+       (setq rightest-column (max (current-column) rightest-column))
+       ))
+    (evil-mc-execute-for-all-cursors
+     (lambda (x) "Insert the necessary spaces"
+       (interactive)
+       (let ((missing-spaces (- rightest-column (current-column))))
+         (save-excursion (insert (make-string missing-spaces character)))
+         (forward-char missing-spaces))))))
+
+;;;###autoload
+(defun evil-mc-vertical-align-with-space ()
+  "Vertically aligns all cursors with spaces to the rightmost one.
+Might not behave as intended if more than one cursors are on the same line."
+  (interactive)
+  (evil-mc-vertical-align 32))
+
+;;;###autoload
 (defun evil-multiedit-insert-state-escape ()
   "Exit to `evil-multiedit-state' and move the cursor back one, to be consistent
 with behavior when exiting vanilla insert state."
