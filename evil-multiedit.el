@@ -583,7 +583,7 @@ state."
   (iedit-barf-if-buffering)
   (save-excursion
     (dolist (occurrence iedit-occurrences-overlays)
-      (delete-region (overlay-start occurrence) (overlay-end occurrence)))))
+      (kill-region (overlay-start occurrence) (overlay-end occurrence)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
