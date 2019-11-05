@@ -35,7 +35,7 @@
 ;;   ;; incrementally add the next unmatched match.
 ;;   (define-key evil-normal-state-map (kbd "M-d") 'evil-multiedit-match-and-next)
 ;;   ;; Match selected region.
-;;   (define-key evil-visual-state-map (kbd "M-d") 'evil-multiedit-and-next)
+;;   (define-key evil-visual-state-map (kbd "M-d") 'evil-multiedit-match-and-next)
 ;;   ;; Insert marker at point
 ;;   (define-key evil-insert-state-map (kbd "M-d") 'evil-multiedit-toggle-marker-here)
 ;;

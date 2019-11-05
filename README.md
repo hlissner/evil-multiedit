@@ -42,13 +42,13 @@ Evil-multiedit does not automatically bind any keys. Call
 ;; incrementally add the next unmatched match.
 (define-key evil-normal-state-map (kbd "M-d") 'evil-multiedit-match-and-next)
 ;; Match selected region.
-(define-key evil-visual-state-map (kbd "M-d") 'evil-multiedit-and-next)
+(define-key evil-visual-state-map (kbd "M-d") 'evil-multiedit-match-and-next)
 ;; Insert marker at point
 (define-key evil-insert-state-map (kbd "M-d") 'evil-multiedit-toggle-marker-here)
 
 ;; Same as M-d but in reverse.
 (define-key evil-normal-state-map (kbd "M-D") 'evil-multiedit-match-and-prev)
-(define-key evil-visual-state-map (kbd "M-D") 'evil-multiedit-and-prev)
+(define-key evil-visual-state-map (kbd "M-D") 'evil-multiedit-match-and-prev)
 
 ;; OPTIONAL: If you prefer to grab symbols rather than words, use
 ;; `evil-multiedit-match-symbol-and-next` (or prev).
