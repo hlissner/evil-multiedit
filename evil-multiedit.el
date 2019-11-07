@@ -581,9 +581,14 @@ state."
   "Delete occurrences."
   (interactive "*")
   (iedit-barf-if-buffering)
-  (save-excursion
-    (dolist (occurrence iedit-occurrences-overlays)
-      (kill-region (overlay-start occurrence) (overlay-end occurrence)))))
+  (when iedit-occurrences-overlays
+    (save-excursion
+      (kill-new
+       (buffer-substring-no-properties
+        (overlay-start (car iedit-occurrences-overlays))
+        (overlay-end (car iedit-occurrences-overlays))))
+      (dolist (occurrence iedit-occurrences-overlays)
+        (delete-region (overlay-start occurrence) (overlay-end occurrence))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
