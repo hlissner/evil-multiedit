@@ -590,6 +590,11 @@ state."
       (dolist (occurrence iedit-occurrences-overlays)
         (delete-region (overlay-start occurrence) (overlay-end occurrence))))))
 
+;; https://github.com/noctuid/lispyville/pull/26
+;; https://github.com/emacs-evil/evil/issues/916
+(when (boundp 'evil-change-commands)
+  (add-to-list 'evil-change-commands #'evil-multiedit--change))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun evil-multiedit-default-keybinds ()
