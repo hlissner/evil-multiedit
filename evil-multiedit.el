@@ -1,6 +1,6 @@
 ;;; evil-multiedit.el --- multiple cursors for evil-mode
 ;;
-;; Copyright (C) 2016-17 Henrik Lissner
+;; Copyright (C) 2016-20 Henrik Lissner
 ;;
 ;; Author: Henrik Lissner <http://github/hlissner>
 ;; Maintainer: Henrik Lissner <henrik@lissner.net>
@@ -284,24 +284,20 @@ or visual mode.
                (setq evil-multiedit--pt-beg (min beg evil-multiedit--pt-beg)
                      evil-multiedit--pt-end (max end evil-multiedit--pt-end))
                (goto-char (if evil-multiedit-follow-matches beg origin))))
-            (t
-             (let* ((occurrence-info (evil-multiedit--get-occurrence))
-                    (occurrence (car occurrence-info))
-                    (beg (nth 1 occurrence-info))
-                    (end (nth 2 occurrence-info)))
-               (if (and beg end)
-                   (progn
-                     (setq evil-multiedit--pt-beg beg
-                           evil-multiedit--pt-end end)
-                     (evil-multiedit-state)
-                     (save-excursion
-                       (evil-multiedit--start-regexp occurrence beg end)
-                       (let ((pattern (evil-ex-make-search-pattern occurrence)))
-                         (when evil-multiedit-store-in-search-history
-                           (setq evil-ex-search-pattern pattern))
-                         (let ((evil-ex-search-pattern pattern))
-                           (evil-ex-find-next nil nil t)))))
-                 (user-error "Can't mark anything")))))))
+            ((cl-destructuring-bind (occurrence beg end)
+                 (evil-multiedit--get-occurrence)
+               (unless (and beg end)
+                 (user-error "Can't mark anything"))
+               (setq evil-multiedit--pt-beg beg
+                     evil-multiedit--pt-end end)
+               (evil-multiedit-state)
+               (save-excursion
+                 (evil-multiedit--start-regexp occurrence beg end)
+                 (let* (evil-ex-search-vim-style-regexp
+                        (pattern (evil-ex-make-search-pattern occurrence)))
+                   (when evil-multiedit-store-in-search-history
+                     (setq evil-ex-search-pattern pattern))
+                   (evil-ex-find-next pattern nil t))))))))
   (length iedit-occurrences-overlays))
 
 ;;;###autoload (autoload 'evil-multiedit-match-and-prev "evil-multiedit" nil t)
