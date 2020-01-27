@@ -570,19 +570,20 @@ state."
 (defun evil-multiedit--paste-replace (count)
   "Replace the selection with the yanked text."
   (interactive "P")
-  (evil-multiedit--delete-occurrences)
+  (evil-multiedit--delete-occurrences t)
   (evil-paste-before count))
 
-(defun evil-multiedit--delete-occurrences ()
-  "Delete occurrences."
+(defun evil-multiedit--delete-occurrences (&optional dont-kill)
+  "Delete occurrences. If DONT-KILL, don't add occurence to kill ring."
   (interactive "*")
   (iedit-barf-if-buffering)
   (when iedit-occurrences-overlays
     (save-excursion
-      (kill-new
-       (buffer-substring-no-properties
-        (overlay-start (car iedit-occurrences-overlays))
-        (overlay-end (car iedit-occurrences-overlays))))
+      (if (not dont-kill)
+        (kill-new
+          (buffer-substring-no-properties
+            (overlay-start (car iedit-occurrences-overlays))
+            (overlay-end (car iedit-occurrences-overlays)))))
       (dolist (occurrence iedit-occurrences-overlays)
         (delete-region (overlay-start occurrence) (overlay-end occurrence))))))
 
