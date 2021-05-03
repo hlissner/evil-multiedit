@@ -1,3 +1,4 @@
+[![Made with Doom Emacs](https://img.shields.io/badge/Made_with-Doom_Emacs-blueviolet.svg?style=flat-square&logo=GNU%20Emacs&logoColor=white)][Doom Emacs]
 ![evil-multiedit](https://img.shields.io/badge/evil--multiedit-v1.3.8-blue.svg)
 [![MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 [![MELPA](http://melpa.org/packages/evil-multiedit-badge.svg)](http://melpa.org/#/evil-multiedit)
@@ -25,9 +26,19 @@ The package is available on MELPA.
 
 `M-x package-install RET evil-multiedit`
 
-Then load it up:
+Then load it up with the default keybinds:
 
-`(require 'evil-multiedit)`
+```lisp
+(require 'evil-multiedit)
+(evil-multiedit-default-keybinds)
+```
+
+### Doom Emacs
+
+This package comes pre-configured with [Doom Emacs], in its `:editor
+multiple-cursors` module. [Enable this
+module](https://github.com/hlissner/doom-emacs/blob/develop/docs/getting_started.org#modules)
+and you're good to go!
 
 ## Usage
 
@@ -82,6 +93,7 @@ evil-multiedit is active or the cursor is in an iedit region:
 * `A`: go into insert mode at end-of-region
 * `I`: go into insert mode at start-of-region
 * `V`: select the region
+* `P`: replace the iedit region with the contents of the clipboard
 * `$`: go to end-of-region
 * `0`/`^`: go to start-of-region
 * `gg`/`G`: go to the first/last region
@@ -98,9 +110,10 @@ in normal mode will invoke it.
 
 ### Commands
 
-* `evil-multiedit-restore`
-* `evil-multiedit-match-all`
-* `evil-multiedit-match-and-next`
+* `evil-multiedit-restore`: Restore the last evil-multiedit session.
+* `evil-multiedit-match-all`: Create iedit regions of all matches of the current
+  selection (or symbol at point) as multiedit regions.
+* `evil-multiedit-match-and-next`:
 * `evil-multiedit-match-and-prev`
 * `evil-multiedit-match-symbol-and-next`
 * `evil-multiedit-match-symbol-and-prev`
@@ -117,16 +130,15 @@ in normal mode will invoke it.
   keys behave differently when the point is inside a multiedit region. Must be
   set before evil-multiedit is loaded.
 * `evil-multiedit-ignore-indent-and-trailing` (default: `t`): If non-nil, skip
-  over indentation and trailing whitespace when matching whitespace.
+  over indentation and trailing whitespace in iedit matches.
 * `evil-multiedit-scope` (default `nil`): How far evil-multiedit should look for
   incremental matches (doesn't affect `evil-multiedit-match-all` or
   `evil-multiedit-ex-match`). Accepts anything that `bounds-of-thing-at-point`
   accepts, such as `'defun`, `'sexp`, `'email` or the default, `'buffer`.
 * `evil-multiedit-smart-match-boundaries` (default `t`): If non-nil, multiedit
-  will try to be smart about match boundaries when invoked from normal mode.
-  E.g.
-  + 'evil-multiedit-match' will not match 'evil-multiedit-match-all'
-  + 'i' will only match 'i' and not every individual i in 'ignition'.
+  will treat matches as atoms when invoked from normal mode. E.g.
+  * `evil-multiedit-match` will not match `evil-multiedit-match-all`
+  * `i` will only match `i` and not every individual i in `ignition`.
   * **NOTE:** If evil-multiedit is invoked from visual mode, this is ignored.
 * `evil-multiedit-store-in-search-history` (default `nil`): If non-nil,
   highlighted occurrences are stored in `regexp-search-ring`, so that after
@@ -137,49 +149,56 @@ in normal mode will invoke it.
 
 ### Co-existing with evil-mc
 
-How the two plugins mingle is entirely personal preference. Mine is to bind
-evil-multiedit to <kbd>M-d</kbd>/<kbd>M-D</kbd>, and evil-mc to a bunch of keys
-prefixed with <kbd>gz</kbd>:
+How the two plugins mingle is entirely personal preference. I often reach for
+evil-mc for more complex operations and evil-multiedit for simpler ones.
+
+My strategy is to bind evil-multiedit to <kbd>M-d</kbd>/<kbd>M-D</kbd>, and
+evil-mc to a bunch of keys prefixed with <kbd>gz</kbd>:
 
 ```emacs-lisp
 ;; evil-multiedit
-:v  "R"     #'evil-multiedit-match-all
-:n  "M-d"   #'evil-multiedit-match-symbol-and-next
-:n  "M-D"   #'evil-multiedit-match-symbol-and-prev
-:v  "M-d"   #'evil-multiedit-match-and-next
-:v  "M-D"   #'evil-multiedit-match-and-prev
-:nv "C-M-d" #'evil-multiedit-restore
-(:after evil-multiedit
-  (:map evil-multiedit-state-map
-    "M-d" #'evil-multiedit-match-and-next
-    "M-D" #'evil-multiedit-match-and-prev
-    "RET" #'evil-multiedit-toggle-or-restrict-region)
-  (:map (evil-multiedit-state-map evil-multiedit-insert-state-map)
-    "C-n" #'evil-multiedit-next
-    "C-p" #'evil-multiedit-prev))
+(evil-define-key 'normal 'global
+  (kbd "M-d")   #'evil-multiedit-match-symbol-and-next
+  (kbd "M-D")   #'evil-multiedit-match-symbol-and-prev)
+(evil-define-key 'visual 'global
+  "R"           #'evil-multiedit-match-all
+  (kbd "M-d")   #'evil-multiedit-match-and-next
+  (kbd "M-D")   #'evil-multiedit-match-and-prev)
+(evil-define-key '(visual normal) 'global
+  (kbd "C-M-d") #'evil-multiedit-restore)
+
+(with-eval-after-load 'evil-mutliedit
+  (evil-define-key 'multiedit 'global
+    (kbd "M-d")   #'evil-multiedit-match-and-next
+    (kbd "M-S-d") #'evil-multiedit-match-and-prev
+    (kbd "RET")   #'evil-multiedit-toggle-or-restrict-region)
+  (evil-define-key '(multiedit multiedit-insert) 'global
+    (kbd "C-n")   #'evil-multiedit-next
+    (kbd "C-p")   #'evil-multiedit-prev))
 
 ;; evil-mc
-(:prefix "gz"
-  :nv "m" #'evil-mc-make-all-cursors
-  :nv "u" #'evil-mc-undo-all-cursors
-  :nv "z" #'+evil/mc-toggle-cursors
-  :nv "c" #'+evil/mc-make-cursor-here
-  :nv "n" #'evil-mc-make-and-goto-next-cursor
-  :nv "p" #'evil-mc-make-and-goto-prev-cursor
-  :nv "N" #'evil-mc-make-and-goto-last-cursor
-  :nv "P" #'evil-mc-make-and-goto-first-cursor)
-(:after evil-mc
-  :map evil-mc-key-map
-  :nv "C-n" #'evil-mc-make-and-goto-next-cursor
-  :nv "C-N" #'evil-mc-make-and-goto-last-cursor
-  :nv "C-p" #'evil-mc-make-and-goto-prev-cursor
-  :nv "C-P" #'evil-mc-make-and-goto-first-cursor)
+(evil-define-key '(normal visual) 'global
+  "gzm" #'evil-mc-make-all-cursors
+  "gzu" #'evil-mc-undo-all-cursors
+  "gzz" #'+evil/mc-toggle-cursors
+  "gzc" #'+evil/mc-make-cursor-here
+  "gzn" #'evil-mc-make-and-goto-next-cursor
+  "gzp" #'evil-mc-make-and-goto-prev-cursor
+  "gzN" #'evil-mc-make-and-goto-last-cursor
+  "gzP" #'evil-mc-make-and-goto-first-cursor)
+(with-eval-after-load 'evil-mc
+  (evil-define-key '(normal visual) evil-mc-key-map
+    (kbd "C-n") #'evil-mc-make-and-goto-next-cursor
+    (kbd "C-N") #'evil-mc-make-and-goto-last-cursor
+    (kbd "C-p") #'evil-mc-make-and-goto-prev-cursor
+    (kbd "C-P") #'evil-mc-make-and-goto-first-cursor))
 ```
 
-You can find [my evil-mc/evil-multiedit config in my emacs.d](https://github.com/hlissner/.emacs.d/blob/master/modules/feature/evil/config.el#L285).
+NOTE: These are the default keybindings on [Doom Emacs]. Doom users don't need
+to bind these.
 
 
-[emacs.d]: https://github.com/hlissner/.emacs.d
+[Doom Emacs]: https://github.com/hlissner/doom-emacs
 [evil-iedit-state]: https://github.com/syl20bnr/evil-iedit-state
 [evil-mc]: https://github.com/gabesoft/evil-mc
 [evil-mode]: https://bitbucket.org/lyro/evil/wiki/Home
