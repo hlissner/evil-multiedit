@@ -412,11 +412,11 @@ selected area is the boundary for matches. If BANG, invert
               ((and evil-multiedit-use-symbols
                     (bounds-of-thing-at-point 'symbol))
                (cons
-                (regexp-opt (list (thing-at-point 'symbol t)) 'symbols)
+                (format "\\_<%s\\_>" (regexp-quote (thing-at-point 'symbol t)))
                 (bounds-of-thing-at-point 'symbol)))
               ((bounds-of-thing-at-point 'word)
                (cons
-                (regexp-opt (list (thing-at-point 'word t)) 'words)
+                (format "\\<%s\\>" (regexp-quote (thing-at-point 'word t)))
                 (bounds-of-thing-at-point 'word)))
               ((cons nil nil))))
     (list regexp (car bounds) (cdr bounds))))
