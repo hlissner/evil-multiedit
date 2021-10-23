@@ -28,41 +28,23 @@
 ;; Evil-multiedit does not automatically bind any keys. Call
 ;; `evil-multiedit-default-keybinds' to bind my recommended configuration:
 ;;
-;;   ;; Highlights all matches of the selection in the buffer.
-;;   (define-key evil-visual-state-map "R" 'evil-multiedit-match-all)
+;;  - S-r      (visual mode) Highlights all matches of the selection in the
+;;             buffer.
+;;  - M-d      In normal mode, this matches the word under the cursor.
+;;               Consecutive presses will match the next match after point.
+;;             In visual mode, the selection is used instead of the word at
+;;               point.
+;;             In insert mode, a blank marker (ala multiple cursors) is added at
+;;               point.
+;;  - M-S-d    Like M-d, but backwards instead of forward.
+;;  - C-M-d    Restore the last iedit session.
+;;  - RET      In normal mode, this toggles the iedit region at point.
+;;             In visual mode, this disables all iedit regions *outside* the
+;;               selection (i.e. restrict-to-region).
+;;  - C-n/C-p  Navigate between iedit regions.
 ;;
-;;   ;; Match the word under cursor (i.e. make it an edit region). Consecutive presses will
-;;   ;; incrementally add the next unmatched match.
-;;   (define-key evil-normal-state-map (kbd "M-d") 'evil-multiedit-match-and-next)
-;;   ;; Match selected region.
-;;   (define-key evil-visual-state-map (kbd "M-d") 'evil-multiedit-match-and-next)
-;;   ;; Insert marker at point
-;;   (define-key evil-insert-state-map (kbd "M-d") 'evil-multiedit-toggle-marker-here)
-;;
-;;   ;; Same as M-d but in reverse.
-;;   (define-key evil-normal-state-map (kbd "M-D") 'evil-multiedit-match-and-prev)
-;;   (define-key evil-visual-state-map (kbd "M-D") 'evil-multiedit-and-prev)
-;;
-;;   ;; OPTIONAL: If you prefer to grab symbols rather than words, use
-;;   ;; `evil-multiedit-match-symbol-and-next` (or prev).
-;;
-;;   ;; Restore the last group of multiedit regions.
-;;   (define-key evil-visual-state-map (kbd "C-M-D") 'evil-multiedit-restore)
-;;
-;;   ;; RET will toggle the region under the cursor
-;;   (define-key evil-multiedit-state-map (kbd "RET") 'evil-multiedit-toggle-or-restrict-region)
-;;
-;;   ;; ...and in visual mode, RET will disable all fields outside the selected region
-;;   (define-key evil-motion-state-map (kbd "RET") 'evil-multiedit-toggle-or-restrict-region)
-;;
-;;   ;; For moving between edit regions
-;;   (define-key evil-multiedit-state-map (kbd "C-n") 'evil-multiedit-next)
-;;   (define-key evil-multiedit-state-map (kbd "C-p") 'evil-multiedit-prev)
-;;   (define-key evil-multiedit-insert-state-map (kbd "C-n") 'evil-multiedit-next)
-;;   (define-key evil-multiedit-insert-state-map (kbd "C-p") 'evil-multiedit-prev)
-;;
-;;   ;; Ex command that allows you to invoke evil-multiedit with a regular expression, e.g.
-;;   (evil-ex-define-cmd "ie[dit]" 'evil-multiedit-ex-match)
+;;  This package also defines an ':ie[dit] REGEXP' ex command, to create iedit
+;;  regions for every match of REGEXP.
 ;;
 ;;; Code:
 
@@ -173,7 +155,7 @@ symbol variants)."
   (cl-destructuring-bind (beg end occurrence) evil-multiedit--last
     (iedit-start occurrence beg end)
     (iedit-restrict-region beg end)
-    (evil-multiedit-state)))
+    (evil-multiedit-mode +1)))
 
 ;;;###autoload
 (defun evil-multiedit-match-all ()
@@ -228,8 +210,7 @@ normal mode, it grabs whole symbols rather than words."
             (setq evil-multiedit--marker t)
             (overlay-put ov 'before-string evil-multiedit-marker))))))
   (if iedit-occurrences-overlays
-      (unless (evil-multiedit-state-p)
-        (evil-multiedit-state))
+      (evil-multiedit-mode +1)
     (evil-multiedit--cleanup)))
 
 ;;;###autoload (autoload 'evil-multiedit-operator "evil-multiedit" nil t)
@@ -292,7 +273,6 @@ or visual mode.
                  (user-error "Can't mark anything"))
                (setq evil-multiedit--pt-beg beg
                      evil-multiedit--pt-end end)
-               (evil-multiedit-state)
                (save-excursion
                  (evil-multiedit--start-regexp occurrence beg end)
                  (let* (evil-ex-search-vim-style-regexp
@@ -300,7 +280,11 @@ or visual mode.
                    (when evil-multiedit-store-in-search-history
                      (setq evil-ex-search-pattern pattern))
                    (evil-ex-find-next pattern nil t))))))))
-  (length iedit-occurrences-overlays))
+  (let ((occurrences (length iedit-occurrences-overlays)))
+    (when (and (> occurrences 0)
+               (evil-visual-state-p))
+      (evil-normal-state))
+    occurrences))
 
 ;;;###autoload (autoload 'evil-multiedit-match-and-prev "evil-multiedit" nil t)
 (evil-define-command evil-multiedit-match-and-prev (&optional count)
@@ -341,12 +325,10 @@ multiedit region beneath the cursor, if one exists."
   (evil-multiedit--cycle -1))
 
 ;;;###autoload
-(defun evil-multiedit-abort (&optional inhibit-normal)
+(defun evil-multiedit-abort ()
   "Clear all multiedit regions, clean up and revert to normal state."
   (interactive)
-  (when (or iedit-occurrences-overlays
-            (evil-multiedit-state-p)
-            (evil-multiedit-insert-state-p))
+  (when evil-multiedit-mode
     (setq evil-multiedit--last nil)
     (when (and iedit-occurrences-overlays (not evil-multiedit--dont-recall))
       (setq iedit-occurrences-overlays
@@ -358,21 +340,7 @@ multiedit region beneath the cursor, if one exists."
                           (save-excursion (goto-char end) (line-end-position))
                           iedit-initial-string-local))))
     (iedit-done)
-    (unless inhibit-normal
-      (evil-normal-state))))
-
-;;;###autoload
-(defun evil-multiedit-insert-state-escape ()
-  "Exit to `evil-multiedit-state' and move the cursor back one, to be consistent
-with behavior when exiting vanilla insert state."
-  (interactive)
-  (evil-multiedit-state)
-  (evil-move-cursor-back))
-
-;;;###autoload
-(defun evil-multiedit-exit-hook ()
-  "Abort the current multiedit session without switching to normal mode."
-  (evil-multiedit-abort t))
+    (evil-multiedit-mode -1)))
 
 ;;;###autoload (autoload 'evil-multiedit-ex-match "evil-multiedit" nil t)
 (evil-define-command evil-multiedit-ex-match (&optional beg end bang regexp)
@@ -473,7 +441,7 @@ selected area is the boundary for matches. If BANG, invert
   (when evil-multiedit-store-in-search-history
     (isearch-update-ring regexp t))
   (iedit-start regexp beg end)
-  (evil-multiedit-state)
+  (evil-multiedit-mode +1)
   regexp)
 
 (defun evil-multiedit--cleanup ()
@@ -491,14 +459,13 @@ COMMAND is called interactively."
      ,docstring
      (interactive)
      (let ((fn (progn ,@body)))
-       (evil-insert-state)
        (when (functionp fn)
          (if (commandp fn)
              (call-interactively fn)
            (funcall fn))))
      ;; required to correctly update the cursors
-     (evil-multiedit-state)
-     (evil-multiedit-insert-state)))
+     (evil-multiedit-mode +1)
+     (evil-insert-state)))
 
 
 ;;
@@ -547,6 +514,10 @@ state."
 (evil-multiedit--defun-insert-subst evil-multiedit--change
   "Wipe all the occurrences and switch in `iedit-insert state'"
   #'evil-change)
+;; https://github.com/noctuid/lispyville/pull/26
+;; https://github.com/emacs-evil/evil/issues/916
+(when (boundp 'evil-change-commands)
+  (add-to-list 'evil-change-commands #'evil-multiedit--change))
 
 (evil-multiedit--defun-insert-subst evil-multiedit--insert-line
   "Place point at beginning of overlay in insert mode."
@@ -612,80 +583,69 @@ state."
       (dolist (occurrence iedit-occurrences-overlays)
         (delete-region (overlay-start occurrence) (overlay-end occurrence))))))
 
-;; https://github.com/noctuid/lispyville/pull/26
-;; https://github.com/emacs-evil/evil/issues/916
-(when (boundp 'evil-change-commands)
-  (add-to-list 'evil-change-commands #'evil-multiedit--change))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;;; Minor mode
 
-(defun evil-multiedit-default-keybinds ()
-  "Sets up the default keybindings for `evil-multiedit'."
-  (define-key evil-visual-state-map "R" #'evil-multiedit-match-all)
-  (define-key evil-normal-state-map (kbd "M-d") #'evil-multiedit-match-symbol-and-next)
-  (define-key evil-visual-state-map (kbd "M-d") #'evil-multiedit-match-and-next)
-  (define-key evil-normal-state-map (kbd "M-D") #'evil-multiedit-match-symbol-and-prev)
-  (define-key evil-visual-state-map (kbd "M-D") #'evil-multiedit-match-and-prev)
-  (define-key evil-insert-state-map (kbd "M-d") #'evil-multiedit-toggle-marker-here)
-  (define-key evil-visual-state-map (kbd "C-M-D") #'evil-multiedit-restore)
-  (define-key evil-motion-state-map (kbd "RET") #'evil-multiedit-toggle-or-restrict-region)
-  (define-key evil-multiedit-state-map (kbd "RET") #'evil-multiedit-toggle-or-restrict-region)
-  (define-key evil-multiedit-state-map (kbd "C-n") #'evil-multiedit-next)
-  (define-key evil-multiedit-state-map (kbd "C-p") #'evil-multiedit-prev)
-  (define-key evil-multiedit-insert-state-map (kbd "C-n") #'evil-multiedit-next)
-  (define-key evil-multiedit-insert-state-map (kbd "C-p") #'evil-multiedit-prev)
-  (evil-ex-define-cmd "ie[dit]" #'evil-multiedit-ex-match))
+(defvar evil-multiedit-mode-map
+  (let ((map (make-sparse-keymap)))
+    (when evil-multiedit-dwim-motion-keys
+      (evil-define-key* '(normal insert) map
+        (kbd "RET") #'evil-multiedit-toggle-or-restrict-region
+        (kbd "C-n") #'evil-multiedit-next
+        (kbd "C-p") #'evil-multiedit-prev)
+      (evil-define-key* 'visual map
+        (kbd "RET") #'evil-multiedit-toggle-or-restrict-region)
+      (evil-define-key* 'insert map
+        (kbd "C-g") #'evil-multiedit-abort)
+      (evil-define-key* 'normal map
+        "0"         #'evil-multiedit-beginning-of-line
+        "^"         #'evil-multiedit-first-non-blank
+        "$"         #'evil-multiedit-end-of-line
+        "a"         #'evil-multiedit--append
+        "A"         #'evil-multiedit--append-line
+        "c"         #'evil-multiedit--change
+        "C"         #'evil-multiedit--change-line
+        "D"         #'evil-multiedit--delete-occurrences
+        "gg"        #'iedit-goto-first-occurrence
+        "G"         #'iedit-goto-last-occurrence
+        "I"         #'evil-multiedit--insert-line
+        "o"         #'evil-multiedit--open-below
+        "O"         #'evil-multiedit--open-above
+        "p"         #'evil-multiedit--paste
+        "P"         #'evil-multiedit--paste-replace
+        (kbd "C-g") #'evil-multiedit-abort
+        "V"         #'evil-multiedit--visual-line
+        "za"        #'iedit-toggle-unmatched-lines-visible))
+    map)
+  "Keymap used for `evil-multiedit-mode'.")
 
-(evil-define-state multiedit
-  "`multiedit state' interfacing iedit mode."
-  :tag " <ME> "
-  :enable (normal)
-  :cursor box
-  :message "-- MULTIEDIT --"
-  (cond ((eq evil-state 'multiedit)
+(define-minor-mode evil-multiedit-mode
+  "A minor mode that indicates an active evil-multiedit session."
+  :init-value nil
+  :after-hook (evil-normalize-keymaps)
+  (cond (evil-multiedit-mode
          (setq-local iedit-auto-save-occurrence-in-kill-ring nil)
-         (add-hook 'iedit-mode-end-hook #'evil-multiedit--cleanup)
+         (add-hook 'iedit-mode-end-hook #'evil-multiedit--cleanup nil 'local)
          (advice-add 'evil-force-normal-state :before #'evil-multiedit-abort)
          (if (evil-replace-state-p) (call-interactively #'iedit-mode)))
         (t
          (kill-local-variable 'iedit-auto-save-occurrence-in-kill-ring)
-         (remove-hook 'iedit-mode-end-hook #'evil-multiedit--cleanup)
-         (advice-remove 'evil-force-normal-state #'evil-multiedit-abort))))
+         (remove-hook 'iedit-mode-end-hook #'evil-multiedit--cleanup 'local))))
 
-(evil-define-state multiedit-insert
-  "Replace insert state in `iedit state'."
-  :tag " <MEi> "
-  :enable (insert)
-  :cursor (bar . 2)
-  :message "-- MULTIEDIT INSERT --")
-
-(add-hook 'evil-normal-state-entry-hook #'evil-multiedit-exit-hook)
-(when evil-multiedit-dwim-motion-keys
-  (let ((map evil-multiedit-insert-state-map))
-    (define-key map (kbd "C-g") #'evil-multiedit-abort)
-    (define-key map [escape]    #'evil-multiedit-insert-state-escape))
-
-  (let ((map evil-multiedit-state-map))
-    (define-key map "0"         #'evil-multiedit-beginning-of-line)
-    (define-key map "^"         #'evil-multiedit-first-non-blank)
-    (define-key map "$"         #'evil-multiedit-end-of-line)
-    (define-key map "a"         #'evil-multiedit--append)
-    (define-key map "A"         #'evil-multiedit--append-line)
-    (define-key map "c"         #'evil-multiedit--change)
-    (define-key map "C"         #'evil-multiedit--change-line)
-    (define-key map "D"         #'evil-multiedit--delete-occurrences)
-    (define-key map "gg"        #'iedit-goto-first-occurrence)
-    (define-key map "G"         #'iedit-goto-last-occurrence)
-    (define-key map "i"         #'evil-multiedit-insert-state)
-    (define-key map "I"         #'evil-multiedit--insert-line)
-    (define-key map "o"         #'evil-multiedit--open-below)
-    (define-key map "O"         #'evil-multiedit--open-above)
-    (define-key map "p"         #'evil-multiedit--paste)
-    (define-key map "P"         #'evil-multiedit--paste-replace)
-    (define-key map (kbd "C-g") #'evil-multiedit-abort)
-    (define-key map [escape]    #'evil-multiedit-abort)
-    (define-key map "V"         #'evil-multiedit--visual-line)
-    (define-key map "za"        #'iedit-toggle-unmatched-lines-visible)))
+(defun evil-multiedit-default-keybinds ()
+  "Sets up the default keybindings for `evil-multiedit'."
+  (evil-define-key* 'visual 'global
+    "R"           #'evil-multiedit-match-all
+    (kbd "M-d")   #'evil-multiedit-match-and-next
+    (kbd "M-D")   #'evil-multiedit-match-and-prev
+    (kbd "C-M-d") #'evil-multiedit-restore)
+  (evil-define-key* '(normal insert) 'global
+    (kbd "M-d")   #'evil-multiedit-match-symbol-and-next
+    (kbd "M-D")   #'evil-multiedit-match-symbol-and-prev)
+  (evil-define-key* 'insert 'global
+    (kbd "C-M-d") #'evil-multiedit-toggle-marker-here)
+  (evil-ex-define-cmd "ie[dit]" #'evil-multiedit-ex-match))
 
 (provide 'evil-multiedit)
 ;;; evil-multiedit.el ends here
