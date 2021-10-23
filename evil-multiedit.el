@@ -9,7 +9,7 @@
 ;; Version: 1.3.9
 ;; Keywords: multiple cursors, editing, iedit
 ;; Homepage: https://github.com/hlissner/evil-multiedit
-;; Package-Requires: ((emacs "24.4") (evil "1.2.12") (iedit "0.9") (cl-lib "0.5"))
+;; Package-Requires: ((emacs "24.4") (evil "1.2.12") (iedit "0.9.9") (cl-lib "0.5"))
 ;;
 ;; This file is not part of GNU Emacs.
 
@@ -572,19 +572,31 @@ state."
         (evil-visual-make-region (overlay-start ov) (1- (overlay-end ov)) 'exclusive)
       (call-interactively #'evil-visual-line))))
 
-(defun evil-multiedit--substitute ()
+(defun evil-multiedit--change-line ()
   "Wipe all the occurrences and switch in `iedit-insert state'"
   (interactive)
-  (if (not (iedit-find-current-occurrence-overlay))
-      (call-interactively #'evil-change-line)
-    (evil-multiedit--delete-occurrences)
-    (evil-multiedit-insert-state)))
+  (let ((ov (iedit-find-current-occurrence-overlay)))
+    (if ov
+        (evil-change (overlay-start ov) (overlay-end ov))
+      (call-interactively #'evil-change-line))))
 
-(defun evil-multiedit--paste-replace (count)
-  "Replace the selection with the yanked text."
-  (interactive "P")
-  (evil-multiedit--delete-occurrences t)
-  (evil-paste-before count))
+(defun evil-multiedit--paste ()
+  "Paste after cursor without clobbering the undo history."
+  (interactive)
+  (evil-with-single-undo
+    (call-interactively #'evil-paste-after)))
+
+(defun evil-multiedit--paste-replace ()
+  "Replace the iedit region with the clipboard."
+  (interactive)
+  (let ((ov (iedit-find-current-occurrence-overlay)))
+    (if (not ov)
+        (call-interactively #'evil-paste-before)
+      (goto-char (overlay-start ov))
+      (delete-region (overlay-start ov)
+                     (overlay-end ov))
+      (insert (current-kill 0))
+      (iedit-update-occurrences))))
 
 (defun evil-multiedit--delete-occurrences (&optional dont-kill)
   "Delete occurrences. If DONT-KILL, don't add occurence to kill ring."
@@ -660,7 +672,7 @@ state."
     (define-key map "a"         #'evil-multiedit--append)
     (define-key map "A"         #'evil-multiedit--append-line)
     (define-key map "c"         #'evil-multiedit--change)
-    (define-key map "C"         #'evil-multiedit--substitute)
+    (define-key map "C"         #'evil-multiedit--change-line)
     (define-key map "D"         #'evil-multiedit--delete-occurrences)
     (define-key map "gg"        #'iedit-goto-first-occurrence)
     (define-key map "G"         #'iedit-goto-last-occurrence)
@@ -668,7 +680,8 @@ state."
     (define-key map "I"         #'evil-multiedit--insert-line)
     (define-key map "o"         #'evil-multiedit--open-below)
     (define-key map "O"         #'evil-multiedit--open-above)
-    (define-key map "p"         #'evil-multiedit--paste-replace)
+    (define-key map "p"         #'evil-multiedit--paste)
+    (define-key map "P"         #'evil-multiedit--paste-replace)
     (define-key map (kbd "C-g") #'evil-multiedit-abort)
     (define-key map [escape]    #'evil-multiedit-abort)
     (define-key map "V"         #'evil-multiedit--visual-line)
