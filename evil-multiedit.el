@@ -137,7 +137,6 @@ or anything that `bounds-of-thing-at-point' accept, such as 'defun, 'sexp or
 'email. If 'buffer (the default), evil-multiedit will search the whole buffer."
   :group 'evil-multiedit
   :type 'symbol)
-(make-variable-buffer-local 'evil-multiedit-scope)
 
 (defcustom evil-multiedit-follow-matches nil
   "If non-nil, cursor will jump to each new match on
