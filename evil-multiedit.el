@@ -493,29 +493,42 @@ COMMAND is called interactively."
      (evil-multiedit-state)
      (evil-multiedit-insert-state)))
 
-(defun evil-multiedit--goto-overlay-start ()
-  "Return the position of the start of the current overlay."
+
+;;
+;;; Evil substitutes
+
+(add-to-list 'evil-digit-bound-motions 'evil-multiedit-beginning-of-line)
+
+(evil-define-motion evil-multiedit-beginning-of-line ()
+  "Go to the beginning of the current overlay or line."
+  :type exclusive
   (let ((overlay (iedit-find-current-occurrence-overlay)))
     (if overlay
         (goto-char (overlay-start overlay))
-      (call-interactively #'evil-digit-argument-or-evil-beginning-of-line))))
+      (call-interactively
+       (if evil-respect-visual-line-mode
+           #'evil-beginning-of-visual-line
+         #'evil-beginning-of-line)))))
 
-(defun evil-multiedit--goto-overlay-end ()
-  "Return the position of the end of the current overlay."
+(evil-define-motion evil-multiedit-first-non-blank ()
+  "Go to the beginning of the current overlay or text."
+  :type exclusive
   (let ((overlay (iedit-find-current-occurrence-overlay)))
     (if overlay
-        (goto-char (overlay-end overlay))
-      (call-interactively #'evil-end-of-line))))
+        (goto-char (overlay-start overlay))
+      (call-interactively
+       (if evil-respect-visual-line-mode
+           #'evil-first-non-blank-of-visual-line
+         #'evil-first-non-blank)))))
 
-(defun evil-multiedit--beginning-of-line ()
-  "Go to the beginning of the current overlay."
-  (interactive)
-  (evil-multiedit--goto-overlay-start))
-
-(defun evil-multiedit--end-of-line ()
-  "Go to the beginning of the current overlay."
-  (interactive)
-  (evil-multiedit--goto-overlay-end))
+(evil-define-motion evil-multiedit-end-of-line ()
+  "Go to the beginning of the current overlay or line."
+  :type exclusive
+  (let ((overlay (iedit-find-current-occurrence-overlay)))
+    (if overlay
+        (goto-char (+ (if (evil-insert-state-p) 0 -1)
+                      (overlay-end overlay)))
+      (call-interactively #'evil-end-of-line-or-visual-line))))
 
 (defun evil-multiedit--append-line ()
   "Put the point at then end of current overlay and switch to iedit-insert
@@ -642,9 +655,9 @@ state."
     (define-key map [escape]    #'evil-multiedit-insert-state-escape))
 
   (let ((map evil-multiedit-state-map))
-    (evil-redirect-digit-argument map "0" #'evil-multiedit--beginning-of-line)
-    (define-key map "^"                   #'evil-multiedit--beginning-of-line)
-    (define-key map "$"                   #'evil-multiedit--end-of-line)
+    (define-key map "0"         #'evil-multiedit-beginning-of-line)
+    (define-key map "^"         #'evil-multiedit-first-non-blank)
+    (define-key map "$"         #'evil-multiedit-end-of-line)
     (define-key map "a"         #'evil-multiedit--append)
     (define-key map "A"         #'evil-multiedit--append-line)
     (define-key map "c"         #'evil-multiedit--change)
