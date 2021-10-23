@@ -55,15 +55,17 @@
 ;;
 ;;; Bootstrap
 
-(while command-line-args-left
-  (let ((regexp "\\.el\\'")
-        (path (expand-file-name (pop command-line-args-left))))
-    (if (file-directory-p path)
-        (setq command-line-args-left
-              (append (directory-files path nil regexp)
-                      command-line-args-left))
-      (when (string-match-p regexp path)
-        (load path nil t)))))
-(ert-run-tests-batch)
+(let ((args (member "--" command-line-args-left)))
+  (when args
+    (while args
+      (let ((regexp "\\.el\\'")
+            (path (expand-file-name (pop args))))
+        (if (file-directory-p path)
+            (setq args
+                  (append (directory-files path nil regexp)
+                          args))
+          (when (string-match-p regexp path)
+            (load path nil t)))))
+    (ert-run-tests-batch)))
 
 ;;; test-helper.el ends here
