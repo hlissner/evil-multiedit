@@ -75,6 +75,10 @@
       (inhibit-message t))
   (require 'iedit))
 
+
+;;
+;;; Options
+
 (defgroup evil-multiedit nil
   "Multiple cursors for `evil-mode' using iedit."
   :prefix "evil-multiedit-"
@@ -152,12 +156,13 @@ symbol variants)."
 (defvar evil-multiedit--pt-index (cons 1 1) "The forward/backward search indices")
 
 (defvar evil-multiedit--dont-recall nil)
-(defvar evil-multiedit--last '() "Details about the last multiedit.")
-(make-variable-buffer-local 'evil-multiedit--last)
+(defvar-local evil-multiedit--last '() "Details about the last multiedit.")
 
 (defvar evil-multiedit--marker nil)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;
+;;; Commands
 
 ;;;###autoload
 (defun evil-multiedit-restore ()
@@ -386,10 +391,14 @@ selected area is the boundary for matches. If BANG, invert
       (when (and beg end)
         (evil-multiedit-toggle-or-restrict-region beg end)))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;
+;;; Helpers
 
 (defun evil-multiedit--cycle (n)
-  (setq iedit-occurrences-overlays (cl-sort iedit-occurrences-overlays (if (> n 0) #'< #'>) :key #'overlay-start))
+  (setq iedit-occurrences-overlays
+        (cl-sort iedit-occurrences-overlays (if (> n 0) #'< #'>)
+                 :key #'overlay-start))
   (let* ((point (point))
          (occurrence
           (cl-find-if (if (> n 0)
@@ -420,32 +429,29 @@ selected area is the boundary for matches. If BANG, invert
                evil-multiedit-scope))))
 
 (defun evil-multiedit--get-occurrence ()
-  (save-match-data
-    (let (regexp bounds)
-      (cond ((evil-visual-state-p)
-             (setq regexp
-                   (regexp-quote (buffer-substring-no-properties
-                                  evil-visual-beginning evil-visual-end)))
-             (setq bounds (cons evil-visual-beginning evil-visual-end)))
-            ((or (and evil-multiedit-match-whitespace
-                      (looking-at "\\s-+"))
-                 (and evil-multiedit-match-punctuation
-                      (looking-at "\\s.+")))
-             (setq regexp (regexp-quote
-                           (match-string-no-properties 0)))
-             (setq bounds (cons (match-beginning 0) (match-end 0))))
-            ((and evil-multiedit-use-symbols
-                  (bounds-of-thing-at-point 'symbol))
-             (setq regexp
-                   (format "\\_<%s\\_>"
-                           (regexp-quote (thing-at-point 'symbol t))))
-             (setq bounds (bounds-of-thing-at-point 'symbol)))
-            ((bounds-of-thing-at-point 'word)
-             (setq regexp
-                   (format "\\<%s\\>"
-                           (regexp-quote (thing-at-point 'word t))))
-             (setq bounds (bounds-of-thing-at-point 'word))))
-      (list regexp (car bounds) (cdr bounds)))))
+  (cl-destructuring-bind (regexp . bounds)
+      (save-match-data
+        (cond ((evil-visual-state-p)
+               (cons
+                (regexp-quote (buffer-substring-no-properties
+                               evil-visual-beginning evil-visual-end))
+                (cons evil-visual-beginning evil-visual-end)))
+              ((or (if evil-multiedit-match-whitespace  (looking-at "\\s-+"))
+                   (if evil-multiedit-match-punctuation (looking-at "\\s.+")))
+               (cons
+                (regexp-quote (match-string-no-properties 0))
+                (cons (match-beginning 0) (match-end 0))))
+              ((and evil-multiedit-use-symbols
+                    (bounds-of-thing-at-point 'symbol))
+               (cons
+                (regexp-opt (list (thing-at-point 'symbol t)) 'symbols)
+                (bounds-of-thing-at-point 'symbol)))
+              ((bounds-of-thing-at-point 'word)
+               (cons
+                (regexp-opt (list (thing-at-point 'word t)) 'words)
+                (bounds-of-thing-at-point 'word)))
+              ((cons nil nil))))
+    (list regexp (car bounds) (cdr bounds))))
 
 (defun evil-multiedit--start (obeg oend &optional beg end)
   (let* ((occurrence (buffer-substring-no-properties obeg oend))
