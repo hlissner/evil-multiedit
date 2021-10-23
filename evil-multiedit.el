@@ -482,13 +482,19 @@ selected area is the boundary for matches. If BANG, invert
         evil-multiedit--pt-index (cons 1 1)
         iedit-occurrences-overlays nil))
 
-(defmacro evil-multiedit--switch-to-insert-state-after (command &optional interactive)
+(defmacro evil-multiedit--defun-insert-subst (command docstring &rest body)
   "Call COMMAND and switch to iedit-insert state. If INTERACTIVE is non-nil then
 COMMAND is called interactively."
-  `(progn
-     (if ,interactive
-         (call-interactively #',command)
-       (funcall ',command))
+  (declare (indent defun) (doc-string 2))
+  `(defun ,command ()
+     ,docstring
+     (interactive)
+     (let ((fn (progn ,@body)))
+       (evil-insert-state)
+       (when (functionp fn)
+         (if (commandp fn)
+             (call-interactively fn)
+           (funcall fn))))
      ;; required to correctly update the cursors
      (evil-multiedit-state)
      (evil-multiedit-insert-state)))
@@ -530,40 +536,32 @@ COMMAND is called interactively."
                       (overlay-end overlay)))
       (call-interactively #'evil-end-of-line-or-visual-line))))
 
-(defun evil-multiedit--append-line ()
+(evil-multiedit--defun-insert-subst evil-multiedit--append-line
   "Put the point at then end of current overlay and switch to iedit-insert
 state."
-  (interactive)
   (if (iedit-find-current-occurrence-overlay)
-      (evil-multiedit--switch-to-insert-state-after evil-multiedit--goto-overlay-end)
-    (evil-multiedit--switch-to-insert-state-after evil-append-line t)))
+      #'evil-multiedit-end-of-line
+    #'evil-append-line))
 
-(defun evil-multiedit--insert-line ()
-  "Put the point at then end of current overlay and switch to iedit-insert
-state."
-  (interactive)
-  (evil-multiedit--switch-to-insert-state-after
-   evil-multiedit--goto-overlay-start))
-
-(defun evil-multiedit--change ()
+(evil-multiedit--defun-insert-subst evil-multiedit--change
   "Wipe all the occurrences and switch in `iedit-insert state'"
-  (interactive)
-  (evil-multiedit--switch-to-insert-state-after evil-change t))
+  #'evil-change)
 
-(defun evil-multiedit--append ()
+(evil-multiedit--defun-insert-subst evil-multiedit--insert-line
+  "Place point at beginning of overlay in insert mode."
+  #'evil-multiedit-beginning-of-line)
+
+(evil-multiedit--defun-insert-subst evil-multiedit--append
   "Append and switch to `iedit-insert state'"
-  (interactive)
-  (evil-multiedit--switch-to-insert-state-after evil-append t))
+  #'evil-append)
 
-(defun evil-multiedit--open-below ()
+(evil-multiedit--defun-insert-subst evil-multiedit--open-below
   "Insert new line below and switch to `iedit-insert state'"
-  (interactive)
-  (evil-multiedit--switch-to-insert-state-after evil-open-below t))
+  #'evil-open-below)
 
-(defun evil-multiedit--open-above ()
+(evil-multiedit--defun-insert-subst evil-multiedit--open-above
   "Insert new line above and switch to `iedit-insert state'"
-  (interactive)
-  (evil-multiedit--switch-to-insert-state-after evil-open-above t))
+  #'evil-open-above)
 
 (defun evil-multiedit--visual-line ()
   "Visually select edit region."
