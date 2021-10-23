@@ -458,14 +458,14 @@ COMMAND is called interactively."
   `(defun ,command ()
      ,docstring
      (interactive)
+     (evil-insert-state)
      (let ((fn (progn ,@body)))
        (when (functionp fn)
          (if (commandp fn)
              (call-interactively fn)
            (funcall fn))))
      ;; required to correctly update the cursors
-     (evil-multiedit-mode +1)
-     (evil-insert-state)))
+     (evil-multiedit-mode +1)))
 
 
 ;;
