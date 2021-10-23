@@ -1,12 +1,12 @@
 ;;; evil-multiedit.el --- multiple cursors for evil-mode
 ;;
-;; Copyright (C) 2016-20 Henrik Lissner
+;; Copyright (C) 2016-21 Henrik Lissner
 ;;
 ;; Author: Henrik Lissner <http://github/hlissner>
 ;; Maintainer: Henrik Lissner <henrik@lissner.net>
 ;; Created: February 20, 2016
-;; Modified: February 09, 2018
-;; Version: 1.3.9
+;; Modified: October 23, 2021
+;; Version: 1.4.0
 ;; Keywords: multiple cursors, editing, iedit
 ;; Homepage: https://github.com/hlissner/evil-multiedit
 ;; Package-Requires: ((emacs "25.1") (evil "1.14.0") (iedit "0.9.9") (cl-lib "0.5"))
