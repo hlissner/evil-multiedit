@@ -619,10 +619,12 @@ state."
   :cursor box
   :message "-- MULTIEDIT --"
   (cond ((eq evil-state 'multiedit)
+         (setq-local iedit-auto-save-occurrence-in-kill-ring nil)
          (add-hook 'iedit-mode-end-hook #'evil-multiedit--cleanup)
          (advice-add 'evil-force-normal-state :before #'evil-multiedit-abort)
          (if (evil-replace-state-p) (call-interactively #'iedit-mode)))
         (t
+         (kill-local-variable 'iedit-auto-save-occurrence-in-kill-ring)
          (remove-hook 'iedit-mode-end-hook #'evil-multiedit--cleanup)
          (advice-remove 'evil-force-normal-state #'evil-multiedit-abort))))
 
