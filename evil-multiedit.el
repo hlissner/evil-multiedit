@@ -66,12 +66,14 @@
 ;;
 ;;; Code:
 
-(defvar iedit-occurrence-keymap-default (make-sparse-keymap))
-(defvar iedit-overlay-priority 0)
-
 (require 'evil)
-(require 'iedit)
 (require 'cl-lib)
+;; HACK `iedit' is very noisy about binding keys at top-level; it emits a
+;;      message in the echo area if it succeeds, and a warning if it fails.
+;;      Both are meaningless to evil-multiedit users so I suppress them.
+(let ((warning-minimum-log-level :error)
+      (inhibit-message t))
+  (require 'iedit))
 
 (defgroup evil-multiedit nil
   "Multiple cursors for `evil-mode' using iedit."
