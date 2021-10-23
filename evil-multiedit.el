@@ -647,5 +647,25 @@ state."
     (kbd "C-M-d") #'evil-multiedit-toggle-marker-here)
   (evil-ex-define-cmd "ie[dit]" #'evil-multiedit-ex-match))
 
+
+;;
+;;; Integrations
+
+;; `expand-region' integration
+(defun evil-multiedit--iedit-mode-from-expand-region (&optional arg)
+  "Start `iedit-mode'."
+  (interactive "P")
+  (evil-multiedit-mode arg)
+  ;; force expand-region temporary overlay map exit
+  (setq overriding-terminal-local-map nil))
+
+(define-advice er/prepare-for-more-expansions-internal (:filter-return (ret) add-multiedit-prompt)
+  "Add evil-multiedit option to expand-region's minibuffer help prompt."
+  (if (not evil-multiedit-mode) ret
+    (cl-destructuring-bind (default-msg . default-bindings) ret
+      (cons (concat default-msg ", e to edit")
+            (add-to-list 'default-bindings
+                         '("e" evil-multiedit--iedit-mode-from-expand-region))))))
+
 (provide 'evil-multiedit)
 ;;; evil-multiedit.el ends here
