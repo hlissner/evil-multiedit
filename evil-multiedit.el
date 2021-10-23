@@ -81,29 +81,25 @@
   :group 'evil)
 
 (defcustom evil-multiedit-dwim-motion-keys t
-  "Whether or not to modify evil's motion keys to act differently when the
-cursor is inside multiedit regions. Must be set before evil-multiedit is
-loaded."
+  "If evil's motion keys should act differently in multiedit regions.
+Must be set before evil-multiedit is loaded."
   :group 'evil-multiedit
   :type 'boolean)
 
 (defcustom evil-multiedit-match-whitespace t
-  "If non-nil allow matching against whitespace characters, where
-whitespace is defined by the active major-mode's syntax
-table."
+  "If non-nil, allow matching against whitespace characters.
+Whitespace is defined by the active major-mode's syntax table."
   :group 'evil-multiedit
   :type 'boolean)
 
 (defcustom evil-multiedit-match-punctuation t
-  "If non-nil allow matching against punctuation characters,
-where punctuation is defined by the active major-mode's syntax
-table."
+  "If non-nil, allow matching against punctuation characters.
+Punctuation is defined by the active major-mode's syntax table."
   :group 'evil-multiedit
   :type 'boolean)
 
 (defcustom evil-multiedit-ignore-indent-and-trailing t
-  "When you match forward whitespace and this is non-nil, leading and trailing
-whitespace will be ignored."
+  "If non-nil, trim whitespace from matches."
   :group 'evil-multiedit
   :type 'boolean)
 
@@ -315,7 +311,6 @@ i.e. disable all regions outside the selection. If in any other mode, toggle the
 multiedit region beneath the cursor, if one exists."
   (interactive)
   (if (and iedit-mode (iedit-current-occurrence-string))
-
       (cond ((or (evil-visual-state-p)
                  (and beg end))
              (let ((current-prefix-arg '(4))
