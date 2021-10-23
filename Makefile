@@ -2,11 +2,18 @@
 all:
 	@cask
 
+autoloads:
+	@emacs -batch \
+        --eval '(setq generated-autoload-file (expand-file-name "evil-multiedit-autoloads.el"))' \
+		-f batch-update-autoloads .
+
+compile:
+	@emacs -batch -L . -f batch-byte-compile *.el
+
 test:
-	@cask exec ert-runner -l evil-multiedit.el
+	@emacs -batch -L . -l test/test-helper.el test/*-test.el
 
 clean:
-	@rm -rf .cask
-	@rm -f *.elc test/*.elc
+	@rm -vrf *.elc *-autoloads.el *~ test/.packages
 
 .PHONY: test

@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        emacs_version: [24.4, 25.1, 25.2, 25.3, 26.1, 26.2, 26.3, 27.1, 27.2, snapshot]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: purcell/setup-emacs@master
+        with:
+          version: ${{ matrix.emacs_version }}
+      - run: make

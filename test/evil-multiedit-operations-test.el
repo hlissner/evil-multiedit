@@ -1,9 +1,12 @@
-;;; evil-multiedit-operations-test.el
+;;; evil-multiedit-operations-test.el --- ... -*- lexical-binding: t; -*-
+;;; Commentary:
+;;; Code:
 
 (defmacro with-op! (initial start-pos macro expected)
   (declare (indent 1))
   `(with! ,initial
      (evil-multiedit--start beg end (point-min) (point-max))
+     (evil-normal-state)
      (goto-char ,start-pos)
      (execute-kbd-macro ,macro)
      (should (string= (buffer-string) ,expected))))
@@ -56,6 +59,7 @@
   :tags '(evil-multiedit-operations)
   (with! "The ||quick|| brown fox was quick"
     (evil-multiedit--start beg end (point-min) (point-max))
+    (evil-normal-state)
     (goto-char beg)
     (evil-multiedit--end-of-line)
     (should (looking-at-p " brown"))
@@ -65,4 +69,3 @@
     (evil-multiedit--beginning-of-line)
     (should (looking-at-p "quick"))
     (should-not (= (point) (point-min)))))
-

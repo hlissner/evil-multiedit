@@ -1,3 +1,22 @@
+;;; test-helper.el --- Set up test environment -*- lexical-binding: t; -*-
+;;; Commentary:
+;;; Code:
+
+;; Set up environment
+(setq package-user-dir (expand-file-name ".packages/" (file-name-directory load-file-name))
+      package-gnupghome-dir (expand-file-name "gpg" package-user-dir)
+      package-archives '(("melpa" . "https://melpa.org/packages/")))
+
+(require 'cl-lib)
+(package-initialize)
+(let ((packages (cl-remove-if #'package-installed-p '(evil iedit))))
+  (when packages
+    (package-refresh-contents))
+  (mapc #'package-install packages))
+
+
+
+;; Bootstrap tests
 (require 'ert)
 (require 'evil-multiedit)
 
@@ -10,22 +29,20 @@
        (with-temp-buffer
          (set-input-method nil)
          (evil-local-mode +1)
-         (pop-to-buffer (current-buffer))
-         (insert ,initial)
-         (goto-char (point-min))
-         (cond ((search-forward "||" nil t)
-                (delete-char -2)
-                (setq beg (point))
-                (if (search-forward "||" nil t)
-                    (progn
-                      (delete-char -2)
-                      (setq end (point)))
-                  (error "No end marker detected"))
-                (setq selection (buffer-substring-no-properties beg end))
+         (save-excursion (insert ,initial))
+         (cond ((re-search-forward "||\\([^|]+\\)||" nil t)
+                (setq selection (match-string-no-properties 1))
+                (replace-match selection)
+                (setq beg (match-beginning 0)
+                      end (match-end 0))
                 (evil-visual-make-selection beg end 'exclusive))
                ((search-forward "|" nil t)
                 (delete-char -1)))
          (setq orig-buffer-string (buffer-string))
+         ;; HACK iedit uses `recenter' in an unusual way, which errors if there
+         ;;      is no window/buffer to recenter (as is the case when running
+         ;;      headless tests), so we create one.
+         (switch-to-buffer (current-buffer))
          ,@rest))))
 
 (defmacro from! (point &rest forms)
@@ -34,3 +51,19 @@
      (goto-char ,point)
      ,@forms))
 
+
+;;
+;;; Bootstrap
+
+(while command-line-args-left
+  (let ((regexp "\\.el\\'")
+        (path (expand-file-name (pop command-line-args-left))))
+    (if (file-directory-p path)
+        (setq command-line-args-left
+              (append (directory-files path nil regexp)
+                      command-line-args-left))
+      (when (string-match-p regexp path)
+        (load path nil t)))))
+(ert-run-tests-batch)
+
+;;; test-helper.el ends here

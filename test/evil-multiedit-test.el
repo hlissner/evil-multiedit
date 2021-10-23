@@ -1,3 +1,6 @@
+;;; evil-multiedit-test.el --- ... -*- lexical-binding: t; -*-
+;;; Commentary:
+;;; Code:
 
 (ert-deftest evil-multiedit-selection-test ()
   :tags '(evil-multiedit)
