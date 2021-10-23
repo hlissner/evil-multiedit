@@ -440,7 +440,8 @@ selected area is the boundary for matches. If BANG, invert
   (setq iedit-initial-string-local regexp)
   (when evil-multiedit-store-in-search-history
     (isearch-update-ring regexp t))
-  (iedit-start regexp beg end)
+  (let ((inhibit-message t))
+    (iedit-start regexp (or beg (point-min)) (or end (point-max))))
   (evil-multiedit-mode +1)
   regexp)
 
