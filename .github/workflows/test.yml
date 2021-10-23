@@ -15,7 +15,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        emacs_version: [24.4, 25.1, 25.2, 25.3, 26.1, 26.2, 26.3, 27.1, 27.2, snapshot]
+        emacs_version: [25.1, 25.2, 25.3, 26.1, 26.2, 26.3, 27.1, 27.2, snapshot]
     steps:
       - uses: actions/checkout@v2
       - uses: purcell/setup-emacs@master
