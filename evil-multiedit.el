@@ -597,8 +597,6 @@ state."
         (kbd "C-p") #'evil-multiedit-prev)
       (evil-define-key* 'visual map
         (kbd "RET") #'evil-multiedit-toggle-or-restrict-region)
-      (evil-define-key* 'insert map
-        (kbd "C-g") #'evil-multiedit-abort)
       (evil-define-key* 'normal map
         "0"         #'evil-multiedit-beginning-of-line
         "^"         #'evil-multiedit-first-non-blank
