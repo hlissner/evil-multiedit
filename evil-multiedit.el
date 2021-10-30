@@ -165,7 +165,9 @@ multiedit regions."
   (if (fboundp 'ahs-clear) (ahs-clear))
   (setq evil-multiedit--dont-recall t)
   (evil-multiedit--start-regexp (car (evil-multiedit--get-occurrence))
-                                (point-min) (point-max)))
+                                (point-min) (point-max))
+  (when (evil-visual-state-p)
+    (evil-normal-state)))
 
 ;;;###autoload (autoload 'evil-multiedit-match-symbol-and-next "evil-multiedit" nil t)
 (evil-define-command evil-multiedit-match-symbol-and-next (&optional count)
