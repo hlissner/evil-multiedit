@@ -474,8 +474,6 @@ COMMAND is called interactively."
 ;;
 ;;; Evil substitutes
 
-(add-to-list 'evil-digit-bound-motions 'evil-multiedit-beginning-of-line)
-
 (evil-define-motion evil-multiedit-beginning-of-line ()
   "Go to the beginning of the current overlay or line."
   :type exclusive
