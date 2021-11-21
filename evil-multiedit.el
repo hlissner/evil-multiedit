@@ -153,7 +153,9 @@ symbol variants)."
   (unless evil-multiedit--last
     (user-error "No previous multiedit session to restore"))
   (cl-destructuring-bind (beg end occurrence) evil-multiedit--last
-    (iedit-start occurrence beg end)
+    (let ((iedit-occurrence-keymap-default nil)
+          (iedit-mode-occurrence-keymap nil))
+      (iedit-start occurrence beg end))
     (iedit-restrict-region beg end)
     (evil-multiedit-mode +1)))
 
@@ -442,7 +444,9 @@ selected area is the boundary for matches. If BANG, invert
   (setq iedit-initial-string-local regexp)
   (when evil-multiedit-store-in-search-history
     (isearch-update-ring regexp t))
-  (let ((inhibit-message t))
+  (let ((inhibit-message t)
+        (iedit-occurrence-keymap-default nil)
+        (iedit-mode-occurrence-keymap nil))
     (iedit-start regexp (or beg (point-min)) (or end (point-max))))
   (evil-multiedit-mode +1)
   regexp)
@@ -626,8 +630,7 @@ state."
   (cond (evil-multiedit-mode
          (setq-local iedit-auto-save-occurrence-in-kill-ring nil)
          (add-hook 'iedit-mode-end-hook #'evil-multiedit--cleanup nil 'local)
-         (advice-add 'evil-force-normal-state :before #'evil-multiedit-abort)
-         (if (evil-replace-state-p) (call-interactively #'iedit-mode)))
+         (advice-add 'evil-force-normal-state :before #'evil-multiedit-abort))
         (t
          (kill-local-variable 'iedit-auto-save-occurrence-in-kill-ring)
          (remove-hook 'iedit-mode-end-hook #'evil-multiedit--cleanup 'local))))
