@@ -574,15 +574,15 @@ state."
   "Delete occurrences. If DONT-KILL, don't add occurence to kill ring."
   (interactive "*")
   (iedit-barf-if-buffering)
-  (when iedit-occurrences-overlays
-    (save-excursion
-      (if (not dont-kill)
-        (kill-new
-          (buffer-substring-no-properties
-            (overlay-start (car iedit-occurrences-overlays))
-            (overlay-end (car iedit-occurrences-overlays)))))
-      (dolist (occurrence iedit-occurrences-overlays)
-        (delete-region (overlay-start occurrence) (overlay-end occurrence))))))
+  (let ((ov (iedit-find-current-occurrence-overlay)))
+    (when ov
+      (save-excursion
+        (if (not dont-kill)
+            (kill-new
+             (buffer-substring-no-properties
+              (overlay-start ov)
+              (overlay-end ov))))
+        (delete-region (overlay-start ov) (overlay-end ov))))))
 
 
 ;;
