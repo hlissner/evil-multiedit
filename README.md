@@ -167,7 +167,7 @@ evil-mc to a bunch of keys prefixed with <kbd>gz</kbd>:
 (evil-define-key '(visual normal) 'global
   (kbd "C-M-d") #'evil-multiedit-restore)
 
-(with-eval-after-load 'evil-mutliedit
+(with-eval-after-load 'evil-multiedit
   (evil-define-key 'multiedit 'global
     (kbd "M-d")   #'evil-multiedit-match-and-next
     (kbd "M-S-d") #'evil-multiedit-match-and-prev
